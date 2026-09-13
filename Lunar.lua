@@ -1,16 +1,16 @@
---//==================================================
---// NEUTRALIZATION HUB
---// UPDATED VERSION
---// PART 1A / 10
---//==================================================
+--==================================================
+-- LUNAR HUB v3.0
+-- PART 1A
+--==================================================
 
+--// SERVICES
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
 
 local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
 
 --==================================================
 -- CONFIG
@@ -18,30 +18,23 @@ local Camera = workspace.CurrentCamera
 
 local Config = {
 
-    -- COMBAT
+    -- Combat
     AimAssist = false,
     VisibleOnly = true,
     AimFOV = true,
-
     AimFOVSize = 150,
     AimSmoothness = 0.18,
-
     TargetPart = "Head",
 
-    -- VISUALS
+    -- Visuals
     ESP = false,
     TeamCheck = true,
-
     BoxESP = true,
-    Names = true,
-    Health = true,
-    Distance = true,
-    Snapline = false,
-    ChestESP = false,
+    Names = false,
+    Health = false,
+    Distance = false,
 
-    ESPFOV = false,
-
-    -- MOVEMENT
+    -- Movement
     Speed = false,
     SpeedValue = 16,
 
@@ -50,11 +43,13 @@ local Config = {
 
     Noclip = false,
 
+    -- FOV
     FOVChanger = false,
     GameFOV = 70,
 
-    -- UI
-    MenuOpen = true
+    -- Info
+    Version = "v3.0",
+    Creator = "By: Lunar Hub"
 }
 
 --==================================================
@@ -63,35 +58,35 @@ local Config = {
 
 local Colors = {
 
-    Menu = Color3.fromRGB(170, 25, 25),
-
     Background = Color3.fromRGB(18, 18, 18),
-    Panel = Color3.fromRGB(25, 25, 25),
 
-    Element = Color3.fromRGB(30, 30, 30),
-    ElementHover = Color3.fromRGB(40, 40, 40),
+    Panel = Color3.fromRGB(24, 24, 24),
 
-    Text = Color3.fromRGB(235, 235, 235),
-    SubText = Color3.fromRGB(145, 145, 145),
+    Menu = Color3.fromRGB(190, 25, 25),
 
-    ToggleOff = Color3.fromRGB(50, 50, 50),
-    ToggleDot = Color3.fromRGB(180, 180, 180),
+    MenuDark = Color3.fromRGB(130, 20, 20),
 
-    ESP = Color3.fromRGB(255, 60, 60),
-    FOV = Color3.fromRGB(170, 25, 25)
+    Card = Color3.fromRGB(30, 30, 30),
+
+    CardHover = Color3.fromRGB(38, 38, 38),
+
+    Text = Color3.fromRGB(240, 240, 240),
+
+    SubText = Color3.fromRGB(155, 155, 155),
+
+    Off = Color3.fromRGB(65, 65, 65),
+
+    Border = Color3.fromRGB(55, 55, 55)
 }
 
 --==================================================
--- CLEAN OLD GUI
+-- DESTROY PREVIOUS VERSION
 --==================================================
 
 pcall(function()
 
-    local CoreGui = game:GetService("CoreGui")
-
-    local old = CoreGui:FindFirstChild(
-        "NeutralizationHub"
-    )
+    local old =
+        CoreGui:FindFirstChild("LunarHub")
 
     if old then
         old:Destroy()
@@ -100,208 +95,727 @@ pcall(function()
 end)
 
 --==================================================
--- HELPERS
+-- GUI
 --==================================================
 
-local function New(class, properties, parent)
+local Gui = Instance.new("ScreenGui")
 
-    local object = Instance.new(class)
+Gui.Name = "LunarHub"
 
-    for property, value in pairs(
-        properties or {}
-    ) do
+Gui.ResetOnSpawn = false
 
-        object[property] = value
+Gui.IgnoreGuiInset = true
+
+Gui.ZIndexBehavior =
+    Enum.ZIndexBehavior.Sibling
+
+pcall(function()
+    Gui.Parent = CoreGui
+end)
+
+if not Gui.Parent then
+    Gui.Parent =
+        LocalPlayer:WaitForChild("PlayerGui")
+end
+
+--==================================================
+-- HELPER
+--==================================================
+
+local function New(
+    className,
+    properties,
+    parent
+)
+
+    local object =
+        Instance.new(className)
+
+    for property, value in pairs(properties) do
+
+        pcall(function()
+            object[property] = value
+        end)
 
     end
 
-    object.Parent = parent
+    if parent then
+        object.Parent = parent
+    end
 
     return object
-
 end
 
 local function Tween(
     object,
     properties,
-    time
+    duration
 )
 
     return TweenService:Create(
-
         object,
-
         TweenInfo.new(
-
-            time or 0.2,
-
+            duration or 0.2,
             Enum.EasingStyle.Quad,
-
             Enum.EasingDirection.Out
-
         ),
-
         properties
-
     )
 
 end
 
 --==================================================
--- MAIN GUI
---==================================================
-
-local Gui = New(
-    "ScreenGui",
-    {
-
-        Name = "NeutralizationHub",
-
-        ResetOnSpawn = false,
-
-        IgnoreGuiInset = true,
-
-        ZIndexBehavior =
-            Enum.ZIndexBehavior.Sibling
-
-    },
-    game:GetService("CoreGui")
-)
-
---==================================================
 -- MAIN WINDOW
 --==================================================
 
-local Main = New(
-    "Frame",
-    {
+local Main = New("Frame", {
 
-        Name = "Main",
+    Name = "Main",
 
-        Size =
-            UDim2.fromOffset(
-                520,
-                320
-            ),
+    Size =
+        UDim2.fromOffset(
+            520,
+            320
+        ),
 
-        Position =
-            UDim2.new(
-                0.5,
-                -260,
-                0.5,
-                -160
-            ),
+    Position =
+        UDim2.new(
+            0.5,
+            -260,
+            0.5,
+            -160
+        ),
 
-        BackgroundColor3 =
-            Colors.Background,
+    BackgroundColor3 =
+        Colors.Background,
 
-        BorderSizePixel = 0,
+    BorderSizePixel = 0,
 
-        ClipsDescendants = true
+    ClipsDescendants = true
 
-    },
-    Gui
-)
+}, Gui)
 
-New(
-    "UICorner",
-    {
+New("UICorner", {
 
-        CornerRadius =
-            UDim.new(0, 8)
+    CornerRadius =
+        UDim.new(0, 8)
 
-    },
-    Main
-)
+}, Main)
 
-New(
-    "UIStroke",
-    {
+New("UIStroke", {
 
-        Color =
-            Color3.fromRGB(
-                55,
-                55,
-                55
-            ),
+    Color = Colors.Border,
 
-        Thickness = 1
+    Thickness = 1,
 
-    },
-    Main
-)
+    Transparency = 0.15
+
+}, Main)
 
 --==================================================
 -- TOP BAR
 --==================================================
 
-local Top = New(
-    "Frame",
-    {
+local TopBar = New("Frame", {
 
-        Size =
-            UDim2.new(
-                1,
-                0,
-                0,
-                48
-            ),
+    Size =
+        UDim2.new(
+            1,
+            0,
+            0,
+            48
+        ),
 
-        BackgroundColor3 =
-            Color3.fromRGB(
-                22,
-                22,
-                22
-            ),
+    BackgroundColor3 =
+        Colors.Panel,
 
-        BorderSizePixel = 0
+    BorderSizePixel = 0
 
-    },
-    Main
-)
+}, Main)
 
-New(
-    "UICorner",
-    {
+--==================================================
+-- LOGO
+--==================================================
 
-        CornerRadius =
-            UDim.new(0, 8)
+local Logo = New("TextLabel", {
 
-    },
-    Top
-)
+    Size =
+        UDim2.fromOffset(
+            38,
+            38
+        ),
+
+    Position =
+        UDim2.fromOffset(
+            10,
+            5
+        ),
+
+    BackgroundColor3 =
+        Colors.Menu,
+
+    Text = "L",
+
+    TextColor3 =
+        Colors.Text,
+
+    TextSize = 21,
+
+    Font =
+        Enum.Font.GothamBold
+
+}, TopBar)
+
+New("UICorner", {
+
+    CornerRadius =
+        UDim.new(0, 8)
+
+}, Logo)
 
 --==================================================
 -- TITLE
 --==================================================
 
-local Title = New(
-    "TextLabel",
-    {
+local Title = New("TextLabel", {
+
+    Size =
+        UDim2.fromOffset(
+            170,
+            25
+        ),
+
+    Position =
+        UDim2.fromOffset(
+            58,
+            6
+        ),
+
+    BackgroundTransparency = 1,
+
+    Text = "LUNAR HUB",
+
+    TextColor3 =
+        Colors.Text,
+
+    TextSize = 17,
+
+    Font =
+        Enum.Font.GothamBold,
+
+    TextXAlignment =
+        Enum.TextXAlignment.Left
+
+}, TopBar)
+
+--==================================================
+-- VERSION
+--==================================================
+
+local Version = New("TextLabel", {
+
+    Size =
+        UDim2.fromOffset(
+            60,
+            18
+        ),
+
+    Position =
+        UDim2.fromOffset(
+            59,
+            28
+        ),
+
+    BackgroundTransparency = 1,
+
+    Text = "v3.0",
+
+    TextColor3 =
+        Colors.Menu,
+
+    TextSize = 10,
+
+    Font =
+        Enum.Font.GothamBold,
+
+    TextXAlignment =
+        Enum.TextXAlignment.Left
+
+}, TopBar)
+
+--==================================================
+-- TOP RIGHT STATUS
+--==================================================
+
+local Status = New("TextLabel", {
+
+    Size =
+        UDim2.fromOffset(
+            120,
+            35
+        ),
+
+    Position =
+        UDim2.new(
+            1,
+            -165,
+            0,
+            7
+        ),
+
+    BackgroundTransparency = 1,
+
+    Text = "Lunar Hub\nUser",
+
+    TextColor3 =
+        Colors.SubText,
+
+    TextSize = 10,
+
+    Font =
+        Enum.Font.Gotham,
+
+    TextXAlignment =
+        Enum.TextXAlignment.Right,
+
+    TextYAlignment =
+        Enum.TextYAlignment.Center
+
+}, TopBar)
+
+--==================================================
+-- CLOSE BUTTON
+--==================================================
+
+local CloseButton = New("TextButton", {
+
+    Size =
+        UDim2.fromOffset(
+            30,
+            30
+        ),
+
+    Position =
+        UDim2.new(
+            1,
+            -38,
+            0,
+            9
+        ),
+
+    BackgroundColor3 =
+        Color3.fromRGB(
+            35,
+            35,
+            35
+        ),
+
+    Text = "×",
+
+    TextColor3 =
+        Colors.Text,
+
+    TextSize = 18,
+
+    Font =
+        Enum.Font.GothamBold,
+
+    AutoButtonColor = false
+
+}, TopBar)
+
+New("UICorner", {
+
+    CornerRadius =
+        UDim.new(1, 0)
+
+}, CloseButton)
+
+CloseButton.MouseEnter:Connect(function()
+
+    Tween(
+        CloseButton,
+        {
+            BackgroundColor3 =
+                Colors.Menu
+        },
+        0.15
+    ):Play()
+
+end)
+
+CloseButton.MouseLeave:Connect(function()
+
+    Tween(
+        CloseButton,
+        {
+            BackgroundColor3 =
+                Color3.fromRGB(
+                    35,
+                    35,
+                    35
+                )
+        },
+        0.15
+    ):Play()
+
+end)
+--==================================================
+-- SIDEBAR
+--==================================================
+
+local Sidebar = New("Frame", {
+
+    Size =
+        UDim2.new(
+            0,
+            145,
+            1,
+            -58
+        ),
+
+    Position =
+        UDim2.fromOffset(
+            8,
+            52
+        ),
+
+    BackgroundColor3 =
+        Colors.Panel,
+
+    BorderSizePixel = 0
+
+}, Main)
+
+New("UICorner", {
+
+    CornerRadius =
+        UDim.new(0, 7)
+
+}, Sidebar)
+
+--==================================================
+-- CONTENT
+--==================================================
+
+local Content = New("Frame", {
+
+    Size =
+        UDim2.new(
+            1,
+            -165,
+            1,
+            -58
+        ),
+
+    Position =
+        UDim2.fromOffset(
+            157,
+            52
+        ),
+
+    BackgroundColor3 =
+        Colors.Panel,
+
+    BorderSizePixel = 0,
+
+    ClipsDescendants = true
+
+}, Main)
+
+New("UICorner", {
+
+    CornerRadius =
+        UDim.new(0, 7)
+
+}, Content)
+
+--==================================================
+-- PAGES
+--==================================================
+
+local Pages = {}
+
+local CombatPage = New("ScrollingFrame", {
+
+    Name = "Combat",
+
+    Size =
+        UDim2.new(
+            1,
+            -12,
+            1,
+            -12
+        ),
+
+    Position =
+        UDim2.fromOffset(
+            6,
+            6
+        ),
+
+    BackgroundTransparency = 1,
+
+    BorderSizePixel = 0,
+
+    ScrollBarThickness = 3,
+
+    ScrollBarImageColor3 =
+        Colors.Menu,
+
+    CanvasSize =
+        UDim2.new(
+            0,
+            0,
+            0,
+            0
+        ),
+
+    AutomaticCanvasSize =
+        Enum.AutomaticSize.Y,
+
+    Visible = true
+
+}, Content)
+
+Pages.Combat = CombatPage
+
+local VisualPage = New("ScrollingFrame", {
+
+    Name = "Visuals",
+
+    Size =
+        UDim2.new(
+            1,
+            -12,
+            1,
+            -12
+        ),
+
+    Position =
+        UDim2.fromOffset(
+            6,
+            6
+        ),
+
+    BackgroundTransparency = 1,
+
+    BorderSizePixel = 0,
+
+    ScrollBarThickness = 3,
+
+    ScrollBarImageColor3 =
+        Colors.Menu,
+
+    AutomaticCanvasSize =
+        Enum.AutomaticSize.Y,
+
+    Visible = false
+
+}, Content)
+
+Pages.Visuals = VisualPage
+
+local MovementPage = New("ScrollingFrame", {
+
+    Name = "Movement",
+
+    Size =
+        UDim2.new(
+            1,
+            -12,
+            1,
+            -12
+        ),
+
+    Position =
+        UDim2.fromOffset(
+            6,
+            6
+        ),
+
+    BackgroundTransparency = 1,
+
+    BorderSizePixel = 0,
+
+    ScrollBarThickness = 3,
+
+    ScrollBarImageColor3 =
+        Colors.Menu,
+
+    AutomaticCanvasSize =
+        Enum.AutomaticSize.Y,
+
+    Visible = false
+
+}, Content)
+
+Pages.Movement = MovementPage
+
+local MiscPage = New("ScrollingFrame", {
+
+    Name = "Misc",
+
+    Size =
+        UDim2.new(
+            1,
+            -12,
+            1,
+            -12
+        ),
+
+    Position =
+        UDim2.fromOffset(
+            6,
+            6
+        ),
+
+    BackgroundTransparency = 1,
+
+    BorderSizePixel = 0,
+
+    ScrollBarThickness = 3,
+
+    ScrollBarImageColor3 =
+        Colors.Menu,
+
+    AutomaticCanvasSize =
+        Enum.AutomaticSize.Y,
+
+    Visible = false
+
+}, Content)
+
+Pages.Misc = MiscPage
+
+local SettingsPage = New("ScrollingFrame", {
+
+    Name = "Settings",
+
+    Size =
+        UDim2.new(
+            1,
+            -12,
+            1,
+            -12
+        ),
+
+    Position =
+        UDim2.fromOffset(
+            6,
+            6
+        ),
+
+    BackgroundTransparency = 1,
+
+    BorderSizePixel = 0,
+
+    ScrollBarThickness = 3,
+
+    ScrollBarImageColor3 =
+        Colors.Menu,
+
+    AutomaticCanvasSize =
+        Enum.AutomaticSize.Y,
+
+    Visible = false
+
+}, Content)
+
+Pages.Settings = SettingsPage
+
+--==================================================
+-- PAGE LAYOUT
+--==================================================
+
+for _, page in pairs(Pages) do
+
+    New("UIPadding", {
+
+        PaddingTop =
+            UDim.new(0, 5),
+
+        PaddingBottom =
+            UDim.new(0, 8),
+
+        PaddingLeft =
+            UDim.new(0, 5),
+
+        PaddingRight =
+            UDim.new(0, 5)
+
+    }, page)
+
+    New("UIListLayout", {
+
+        Padding =
+            UDim.new(0, 7),
+
+        SortOrder =
+            Enum.SortOrder.LayoutOrder
+
+    }, page)
+
+end
+
+--==================================================
+-- PAGE HEADER
+--==================================================
+
+local function CreatePageHeader(
+    parent,
+    title,
+    subtitle
+)
+
+    local frame = New("Frame", {
 
         Size =
             UDim2.new(
                 1,
-                -150,
+                -10,
+                0,
+                52
+            ),
+
+        BackgroundColor3 =
+            Colors.Card,
+
+        BorderSizePixel = 0
+
+    }, parent)
+
+    New("UICorner", {
+
+        CornerRadius =
+            UDim.new(0, 6)
+
+    }, frame)
+
+    New("TextLabel", {
+
+        Size =
+            UDim2.new(
                 1,
-                0
+                -20,
+                0,
+                25
             ),
 
         Position =
             UDim2.fromOffset(
-                18,
-                0
+                10,
+                5
             ),
 
         BackgroundTransparency = 1,
 
-        Text =
-            "NEUTRALIZATION HUB",
+        Text = title,
 
         TextColor3 =
             Colors.Text,
 
-        TextSize = 17,
+        TextSize = 16,
 
         Font =
             Enum.Font.GothamBold,
@@ -309,35 +823,106 @@ local Title = New(
         TextXAlignment =
             Enum.TextXAlignment.Left
 
-    },
-    Top
-)
+    }, frame)
 
---==================================================
--- VERSION
---==================================================
-
-local Version = New(
-    "TextLabel",
-    {
+    New("TextLabel", {
 
         Size =
-            UDim2.fromOffset(
-                70,
-                48
+            UDim2.new(
+                1,
+                -20,
+                0,
+                18
             ),
 
         Position =
-            UDim2.new(
-                1,
-                -115,
-                0,
-                0
+            UDim2.fromOffset(
+                10,
+                29
             ),
 
         BackgroundTransparency = 1,
 
-        Text = "v2.0",
+        Text = subtitle,
+
+        TextColor3 =
+            Colors.SubText,
+
+        TextSize = 10,
+
+        Font =
+            Enum.Font.Gotham,
+
+        TextXAlignment =
+            Enum.TextXAlignment.Left
+
+    }, frame)
+
+    return frame
+end
+
+CreatePageHeader(
+    CombatPage,
+    "Combat",
+    "Aim and combat functions"
+)
+
+CreatePageHeader(
+    VisualPage,
+    "Visuals",
+    "ESP and visual settings"
+)
+
+CreatePageHeader(
+    MovementPage,
+    "Movement",
+    "Movement and camera settings"
+)
+
+CreatePageHeader(
+    MiscPage,
+    "Misc",
+    "Additional options"
+)
+
+CreatePageHeader(
+    SettingsPage,
+    "Settings",
+    "Lunar Hub configuration"
+)
+
+--==================================================
+-- SIDEBAR BUTTONS
+--==================================================
+
+local CategoryButtons = {}
+
+local function CreateCategory(
+    text,
+    page,
+    order
+)
+
+    local button = New("TextButton", {
+
+        Size =
+            UDim2.new(
+                1,
+                -12,
+                0,
+                38
+            ),
+
+        BackgroundColor3 =
+            Color3.fromRGB(
+                29,
+                29,
+                29
+            ),
+
+        BorderSizePixel = 0,
+
+        Text = text,
 
         TextColor3 =
             Colors.SubText,
@@ -345,310 +930,91 @@ local Version = New(
         TextSize = 12,
 
         Font =
-            Enum.Font.Gotham
+            Enum.Font.GothamSemibold,
 
-    },
-    Top
-)
+        AutoButtonColor = false,
 
---==================================================
--- MINIMIZE
---==================================================
+        LayoutOrder = order
 
-local Minimize = New(
-    "TextButton",
-    {
+    }, Sidebar)
 
-        Size =
-            UDim2.fromOffset(
-                38,
-                38
-            ),
-
-        Position =
-            UDim2.new(
-                1,
-                -48,
-                0,
-                5
-            ),
-
-        BackgroundColor3 =
-            Color3.fromRGB(
-                35,
-                35,
-                35
-            ),
-
-        Text = "—",
-
-        TextColor3 =
-            Colors.Text,
-
-        TextSize = 18,
-
-        Font =
-            Enum.Font.GothamBold,
-
-        AutoButtonColor = false
-
-    },
-    Top
-)
-
-New(
-    "UICorner",
-    {
+    New("UICorner", {
 
         CornerRadius =
             UDim.new(0, 6)
 
-    },
-    Minimize
-)
+    }, button)
 
---==================================================
--- SIDEBAR
---==================================================
+    CategoryButtons[page] = button
 
-local Sidebar = New(
-    "Frame",
-    {
-
-        Size =
-            UDim2.fromOffset(
-                145,
-                260
-            ),
-
-        Position =
-            UDim2.fromOffset(
-                10,
-                55
-            ),
-
-        BackgroundColor3 =
-            Colors.Panel,
-
-        BorderSizePixel = 0
-
-    },
-    Main
-)
-
-New(
-    "UICorner",
-    {
-
-        CornerRadius =
-            UDim.new(0, 7)
-
-    },
-    Sidebar
-)
-
-New(
-    "UIPadding",
-    {
-
-        PaddingTop =
-            UDim.new(0, 8),
-
-        PaddingLeft =
-            UDim.new(0, 8),
-
-        PaddingRight =
-            UDim.new(0, 8)
-
-    },
-    Sidebar
-)
-
-local SidebarLayout = New(
-    "UIListLayout",
-    {
-
-        Padding =
-            UDim.new(0, 5),
-
-        SortOrder =
-            Enum.SortOrder.LayoutOrder
-
-    },
-    Sidebar
-)
-
---==================================================
--- CONTENT
---==================================================
-
-local Content = New(
-    "Frame",
-    {
-
-        Size =
-            UDim2.new(
-                1,
-                -170,
-                1,
-                -65
-            ),
-
-        Position =
-            UDim2.fromOffset(
-                160,
-                55
-            ),
-
-        BackgroundColor3 =
-            Colors.Panel,
-
-        BorderSizePixel = 0
-
-    },
-    Main
-)
-
-New(
-    "UICorner",
-    {
-
-        CornerRadius =
-            UDim.new(0, 7)
-
-    },
-    Content
-)
-
---==================================================
--- PAGES TABLE
---==================================================
-
-local Pages = {}
-
---==================================================
--- CREATE PAGE
---==================================================
-
-local function CreatePage(name)
-
-    local page = New(
-        "ScrollingFrame",
-        {
-
-            Name = name,
-
-            Size =
-                UDim2.new(
-                    1,
-                    -16,
-                    1,
-                    -16
-                ),
-
-            Position =
-                UDim2.fromOffset(
-                    8,
-                    8
-                ),
-
-            BackgroundTransparency = 1,
-
-            BorderSizePixel = 0,
-
-            ScrollBarThickness = 3,
-
-            CanvasSize =
-                UDim2.new(
-                    0,
-                    0,
-                    0,
-                    0
-                ),
-
-            AutomaticCanvasSize =
-                Enum.AutomaticSize.Y,
-
-            Visible = false
-
-        },
-        Content
-    )
-
-    New(
-        "UIListLayout",
-        {
-
-            Padding =
-                UDim.new(0, 7),
-
-            SortOrder =
-                Enum.SortOrder.LayoutOrder
-
-        },
-        page
-    )
-
-    New(
-        "UIPadding",
-        {
-
-            PaddingTop =
-                UDim.new(0, 4),
-
-            PaddingBottom =
-                UDim.new(0, 8)
-
-        },
-        page
-    )
-
-    Pages[name] = page
-
-    return page
-
+    return button
 end
 
+New("UIListLayout", {
+
+    Padding =
+        UDim.new(0, 5),
+
+    SortOrder =
+        Enum.SortOrder.LayoutOrder
+
+}, Sidebar)
+
+New("UIPadding", {
+
+    PaddingTop =
+        UDim.new(0, 8),
+
+    PaddingLeft =
+        UDim.new(0, 6),
+
+    PaddingRight =
+        UDim.new(0, 6)
+
+}, Sidebar)
+
+CreateCategory(
+    "Combat",
+    CombatPage,
+    1
+)
+
+CreateCategory(
+    "Visuals",
+    VisualPage,
+    2
+)
+
+CreateCategory(
+    "Movement",
+    MovementPage,
+    3
+)
+
+CreateCategory(
+    "Misc",
+    MiscPage,
+    4
+)
+
+CreateCategory(
+    "Settings",
+    SettingsPage,
+    5
+)
+
+print("[Lunar Hub] Part 1/6 loaded.")
+
 --==================================================
--- CREATE ALL PAGES
+-- LUNAR HUB v3.0
+-- PART 2/6
 --==================================================
 
-local CombatPage =
-    CreatePage("Combat")
-
-local VisualPage =
-    CreatePage("Visuals")
-
-local MovementPage =
-    CreatePage("Movement")
-
-local MiscPage =
-    CreatePage("Misc")
-
-local SettingsPage =
-    CreatePage("Settings")
-
 --==================================================
--- CATEGORY STATE
+-- PAGE SWITCHING
 --==================================================
 
-local CurrentPage = nil
-
-local CategoryButtons = {}
-
---==================================================
--- END OF PART 1A
---==================================================
-
---//==================================================
---// NEUTRALIZATION HUB
---// PART 1B / 10
---// UI CONTINUATION + COMBAT CONTROLS
---//==================================================
-
---==================================================
--- CATEGORY BUTTONS
---==================================================
+local CurrentPage = CombatPage
 
 local function SetPage(page)
 
@@ -659,21 +1025,39 @@ local function SetPage(page)
     page.Visible = true
     CurrentPage = page
 
-    for _, button in pairs(CategoryButtons) do
+    for otherPage, button in pairs(CategoryButtons) do
 
-        if button.Page == page then
+        if otherPage == page then
 
-            Tween(button.Object, {
-                BackgroundColor3 = Colors.Menu,
-                TextColor3 = Colors.Text
-            }, 0.15):Play()
+            Tween(
+                button,
+                {
+                    BackgroundColor3 =
+                        Colors.Menu,
+
+                    TextColor3 =
+                        Colors.Text
+                },
+                0.15
+            ):Play()
 
         else
 
-            Tween(button.Object, {
-                BackgroundColor3 = Colors.Element,
-                TextColor3 = Colors.SubText
-            }, 0.15):Play()
+            Tween(
+                button,
+                {
+                    BackgroundColor3 =
+                        Color3.fromRGB(
+                            29,
+                            29,
+                            29
+                        ),
+
+                    TextColor3 =
+                        Colors.SubText
+                },
+                0.15
+            ):Play()
 
         end
 
@@ -681,70 +1065,26 @@ local function SetPage(page)
 
 end
 
-local function CreateCategory(text, page)
+for page, button in pairs(CategoryButtons) do
 
-    local button = New(
-        "TextButton",
-        {
+    button.MouseButton1Click:Connect(function()
 
-            Size =
-                UDim2.new(
-                    1,
-                    0,
-                    0,
-                    37
-                ),
+        SetPage(page)
 
-            BackgroundColor3 =
-                Colors.Element,
-
-            BorderSizePixel = 0,
-
-            Text = text,
-
-            TextColor3 =
-                Colors.SubText,
-
-            TextSize = 13,
-
-            Font =
-                Enum.Font.GothamSemibold,
-
-            AutoButtonColor = false
-
-        },
-        Sidebar
-    )
-
-    New(
-        "UICorner",
-        {
-
-            CornerRadius =
-                UDim.new(0, 6)
-
-        },
-        button
-    )
-
-    local data = {
-        Object = button,
-        Page = page
-    }
-
-    table.insert(
-        CategoryButtons,
-        data
-    )
+    end)
 
     button.MouseEnter:Connect(function()
 
         if CurrentPage ~= page then
 
-            Tween(button, {
-                BackgroundColor3 =
-                    Colors.ElementHover
-            }, 0.12):Play()
+            Tween(
+                button,
+                {
+                    BackgroundColor3 =
+                        Colors.CardHover
+                },
+                0.12
+            ):Play()
 
         end
 
@@ -754,53 +1094,26 @@ local function CreateCategory(text, page)
 
         if CurrentPage ~= page then
 
-            Tween(button, {
-                BackgroundColor3 =
-                    Colors.Element
-            }, 0.12):Play()
+            Tween(
+                button,
+                {
+                    BackgroundColor3 =
+                        Color3.fromRGB(
+                            29,
+                            29,
+                            29
+                        )
+                },
+                0.12
+            ):Play()
 
         end
 
     end)
 
-    button.MouseButton1Click:Connect(function()
-
-        SetPage(page)
-
-    end)
-
-    return button
-
 end
 
---==================================================
--- CREATE CATEGORIES
---==================================================
-
-CreateCategory(
-    "Combat",
-    CombatPage
-)
-
-CreateCategory(
-    "Visuals",
-    VisualPage
-)
-
-CreateCategory(
-    "Movement",
-    MovementPage
-)
-
-CreateCategory(
-    "Misc",
-    MiscPage
-)
-
-CreateCategory(
-    "Settings",
-    SettingsPage
-)
+SetPage(CombatPage)
 
 --==================================================
 -- TOGGLE CREATOR
@@ -813,186 +1126,175 @@ local function CreateToggle(
     callback
 )
 
-    local state = default == true
+    local state =
+        default == true
 
-    local holder = New(
-        "Frame",
-        {
+    local holder = New("Frame", {
 
-            Size =
-                UDim2.new(
-                    1,
-                    -8,
-                    0,
-                    42
-                ),
+        Size =
+            UDim2.new(
+                1,
+                -10,
+                0,
+                42
+            ),
 
-            BackgroundColor3 =
-                Colors.Element,
+        BackgroundColor3 =
+            Colors.Card,
 
-            BorderSizePixel = 0
+        BorderSizePixel = 0
 
-        },
-        parent
-    )
+    }, parent)
 
-    New(
-        "UICorner",
-        {
+    New("UICorner", {
 
-            CornerRadius =
-                UDim.new(0, 6)
+        CornerRadius =
+            UDim.new(0, 6)
 
-        },
-        holder
-    )
+    }, holder)
 
-    local label = New(
-        "TextLabel",
-        {
+    local label = New("TextLabel", {
 
-            Size =
-                UDim2.new(
-                    1,
-                    -70,
-                    1,
-                    0
-                ),
+        Size =
+            UDim2.new(
+                1,
+                -75,
+                1,
+                0
+            ),
 
-            Position =
-                UDim2.fromOffset(
-                    12,
-                    0
-                ),
+        Position =
+            UDim2.fromOffset(
+                12,
+                0
+            ),
 
-            BackgroundTransparency = 1,
+        BackgroundTransparency = 1,
 
-            Text = text,
+        Text = text,
 
-            TextColor3 =
-                Colors.Text,
+        TextColor3 =
+            Colors.Text,
 
-            TextSize = 13,
+        TextSize = 12,
 
-            Font =
-                Enum.Font.Gotham,
+        Font =
+            Enum.Font.Gotham,
 
-            TextXAlignment =
-                Enum.TextXAlignment.Left
+        TextXAlignment =
+            Enum.TextXAlignment.Left
 
-        },
-        holder
-    )
+    }, holder)
 
-    local toggle = New(
-        "TextButton",
-        {
+    local toggle = New("TextButton", {
 
-            Size =
-                UDim2.fromOffset(
-                    42,
-                    22
-                ),
+        Size =
+            UDim2.fromOffset(
+                42,
+                22
+            ),
 
-            Position =
-                UDim2.new(
-                    1,
-                    -53,
-                    0.5,
-                    -11
-                ),
+        Position =
+            UDim2.new(
+                1,
+                -54,
+                0.5,
+                -11
+            ),
 
-            BackgroundColor3 =
-                Colors.ToggleOff,
+        BackgroundColor3 =
+            Colors.Off,
 
-            BorderSizePixel = 0,
+        BorderSizePixel = 0,
 
-            Text = "",
+        Text = "",
 
-            AutoButtonColor = false
+        AutoButtonColor = false
 
-        },
-        holder
-    )
+    }, holder)
 
-    New(
-        "UICorner",
-        {
+    New("UICorner", {
 
-            CornerRadius =
-                UDim.new(1, 0)
+        CornerRadius =
+            UDim.new(1, 0)
 
-        },
-        toggle
-    )
+    }, toggle)
 
-    local dot = New(
-        "Frame",
-        {
+    local dot = New("Frame", {
 
-            Size =
-                UDim2.fromOffset(
-                    16,
-                    16
-                ),
+        Size =
+            UDim2.fromOffset(
+                16,
+                16
+            ),
 
-            Position =
-                UDim2.fromOffset(
-                    3,
-                    3
-                ),
+        Position =
+            UDim2.fromOffset(
+                3,
+                3
+            ),
 
-            BackgroundColor3 =
-                Colors.ToggleDot,
+        BackgroundColor3 =
+            Colors.Text,
 
-            BorderSizePixel = 0
+        BorderSizePixel = 0
 
-        },
-        toggle
-    )
+    }, toggle)
 
-    New(
-        "UICorner",
-        {
+    New("UICorner", {
 
-            CornerRadius =
-                UDim.new(1, 0)
+        CornerRadius =
+            UDim.new(1, 0)
 
-        },
-        dot
-    )
+    }, dot)
 
     local function Update()
 
         if state then
 
-            Tween(toggle, {
-                BackgroundColor3 =
-                    Colors.Menu
-            }, 0.15):Play()
+            Tween(
+                toggle,
+                {
+                    BackgroundColor3 =
+                        Colors.Menu
+                },
+                0.15
+            ):Play()
 
-            Tween(dot, {
-                Position =
-                    UDim2.fromOffset(
-                        23,
-                        3
-                    )
-            }, 0.15):Play()
+            Tween(
+                dot,
+                {
+                    Position =
+                        UDim2.fromOffset(
+                            23,
+                            3
+                        )
+                },
+                0.15
+            ):Play()
 
         else
 
-            Tween(toggle, {
-                BackgroundColor3 =
-                    Colors.ToggleOff
-            }, 0.15):Play()
+            Tween(
+                toggle,
+                {
+                    BackgroundColor3 =
+                        Colors.Off
+                },
+                0.15
+            ):Play()
 
-            Tween(dot, {
-                Position =
-                    UDim2.fromOffset(
-                        3,
-                        3
-                    )
-            }, 0.15):Play()
+            Tween(
+                dot,
+                {
+                    Position =
+                        UDim2.fromOffset(
+                            3,
+                            3
+                        )
+                },
+                0.15
+            ):Play()
 
         end
 
@@ -1010,13 +1312,40 @@ local function CreateToggle(
 
     end)
 
+    holder.MouseEnter:Connect(function()
+
+        Tween(
+            holder,
+            {
+                BackgroundColor3 =
+                    Colors.CardHover
+            },
+            0.12
+        ):Play()
+
+    end)
+
+    holder.MouseLeave:Connect(function()
+
+        Tween(
+            holder,
+            {
+                BackgroundColor3 =
+                    Colors.Card
+            },
+            0.12
+        ):Play()
+
+    end)
+
     Update()
 
     return {
 
         Set = function(value)
 
-            state = value == true
+            state =
+                value == true
 
             Update()
 
@@ -1033,7 +1362,7 @@ local function CreateToggle(
 end
 
 --==================================================
--- VALUE CREATOR
+-- NUMBER VALUE CREATOR
 --==================================================
 
 local function CreateValue(
@@ -1043,141 +1372,135 @@ local function CreateValue(
     callback
 )
 
-    local holder = New(
-        "Frame",
-        {
+    local holder = New("Frame", {
 
-            Size =
-                UDim2.new(
-                    1,
-                    -8,
-                    0,
-                    42
-                ),
+        Size =
+            UDim2.new(
+                1,
+                -10,
+                0,
+                42
+            ),
 
-            BackgroundColor3 =
-                Colors.Element,
+        BackgroundColor3 =
+            Colors.Card,
 
-            BorderSizePixel = 0
+        BorderSizePixel = 0
 
-        },
-        parent
-    )
+    }, parent)
 
-    New(
-        "UICorner",
-        {
+    New("UICorner", {
 
-            CornerRadius =
-                UDim.new(0, 6)
+        CornerRadius =
+            UDim.new(0, 6)
 
-        },
-        holder
-    )
+    }, holder)
 
-    New(
-        "TextLabel",
-        {
+    New("TextLabel", {
 
-            Size =
-                UDim2.new(
-                    1,
-                    -100,
-                    1,
-                    0
-                ),
+        Size =
+            UDim2.new(
+                1,
+                -105,
+                1,
+                0
+            ),
 
-            Position =
-                UDim2.fromOffset(
-                    12,
-                    0
-                ),
+        Position =
+            UDim2.fromOffset(
+                12,
+                0
+            ),
 
-            BackgroundTransparency = 1,
+        BackgroundTransparency = 1,
 
-            Text = text,
+        Text = text,
 
-            TextColor3 =
-                Colors.Text,
+        TextColor3 =
+            Colors.Text,
 
-            TextSize = 13,
+        TextSize = 12,
 
-            Font =
-                Enum.Font.Gotham,
+        Font =
+            Enum.Font.Gotham,
 
-            TextXAlignment =
-                Enum.TextXAlignment.Left
+        TextXAlignment =
+            Enum.TextXAlignment.Left
 
-        },
-        holder
-    )
+    }, holder)
 
-    local box = New(
-        "TextBox",
-        {
+    local box = New("TextBox", {
 
-            Size =
-                UDim2.fromOffset(
-                    75,
-                    26
-                ),
+        Size =
+            UDim2.fromOffset(
+                70,
+                26
+            ),
 
-            Position =
-                UDim2.new(
-                    1,
-                    -87,
-                    0.5,
-                    -13
-                ),
+        Position =
+            UDim2.new(
+                1,
+                -82,
+                0.5,
+                -13
+            ),
 
-            BackgroundColor3 =
-                Color3.fromRGB(
-                    20,
-                    20,
-                    20
-                ),
+        BackgroundColor3 =
+            Color3.fromRGB(
+                20,
+                20,
+                20
+            ),
 
-            BorderSizePixel = 0,
+        BorderSizePixel = 0,
 
-            Text =
-                tostring(default),
+        Text =
+            tostring(default),
 
-            TextColor3 =
-                Colors.Text,
+        TextColor3 =
+            Colors.Text,
 
-            PlaceholderColor3 =
-                Colors.SubText,
+        PlaceholderColor3 =
+            Colors.SubText,
 
-            TextSize = 12,
+        TextSize = 11,
 
-            Font =
-                Enum.Font.Gotham,
+        Font =
+            Enum.Font.Gotham,
 
-            ClearTextOnFocus = false
+        ClearTextOnFocus = false
 
-        },
-        holder
-    )
+    }, holder)
 
-    New(
-        "UICorner",
-        {
+    New("UICorner", {
 
-            CornerRadius =
-                UDim.new(0, 5)
+        CornerRadius =
+            UDim.new(0, 5)
 
-        },
-        box
-    )
+    }, box)
+
+    New("UIStroke", {
+
+        Color =
+            Colors.Border,
+
+        Thickness = 1,
+
+        Transparency = 0.25
+
+    }, box)
 
     box.FocusLost:Connect(function()
 
         local value =
             tonumber(box.Text)
 
-        if value then
+        if value ~= nil then
 
             callback(value)
+
+            box.Text =
+                tostring(value)
 
         else
 
@@ -1188,184 +1511,325 @@ local function CreateValue(
 
     end)
 
+    holder.MouseEnter:Connect(function()
+
+        Tween(
+            holder,
+            {
+                BackgroundColor3 =
+                    Colors.CardHover
+            },
+            0.12
+        ):Play()
+
+    end)
+
+    holder.MouseLeave:Connect(function()
+
+        Tween(
+            holder,
+            {
+                BackgroundColor3 =
+                    Colors.Card
+            },
+            0.12
+        ):Play()
+
+    end)
+
     return box
 
 end
 
 --==================================================
--- TARGET PART SELECTOR
+-- SELECTOR CREATOR
 --==================================================
 
-local function CreateTargetSelector(parent)
+local function CreateSelector(
+    parent,
+    text,
+    values,
+    default,
+    callback
+)
 
-    local holder = New(
-        "Frame",
-        {
+    local currentIndex = 1
 
-            Size =
-                UDim2.new(
-                    1,
-                    -8,
-                    0,
-                    70
-                ),
+    for index, value in ipairs(values) do
 
-            BackgroundColor3 =
-                Colors.Element,
-
-            BorderSizePixel = 0
-
-        },
-        parent
-    )
-
-    New(
-        "UICorner",
-        {
-
-            CornerRadius =
-                UDim.new(0, 6)
-
-        },
-        holder
-    )
-
-    New(
-        "TextLabel",
-        {
-
-            Size =
-                UDim2.new(
-                    1,
-                    -20,
-                    0,
-                    28
-                ),
-
-            Position =
-                UDim2.fromOffset(
-                    12,
-                    4
-                ),
-
-            BackgroundTransparency = 1,
-
-            Text =
-                "Target Part",
-
-            TextColor3 =
-                Colors.Text,
-
-            TextSize = 13,
-
-            Font =
-                Enum.Font.GothamSemibold,
-
-            TextXAlignment =
-                Enum.TextXAlignment.Left
-
-        },
-        holder
-    )
-
-    local parts = {
-        "Head",
-        "Torso",
-        "Random"
-    }
-
-    for index, partName in ipairs(parts) do
-
-        local button = New(
-            "TextButton",
-            {
-
-                Size =
-                    UDim2.fromOffset(
-                        78,
-                        27
-                    ),
-
-                Position =
-                    UDim2.fromOffset(
-                        10 +
-                        ((index - 1) * 84),
-                        36
-                    ),
-
-                BackgroundColor3 =
-                    partName ==
-                    Config.TargetPart
-                    and Colors.Menu
-                    or Color3.fromRGB(
-                        45,
-                        45,
-                        45
-                    ),
-
-                BorderSizePixel = 0,
-
-                Text = partName,
-
-                TextColor3 =
-                    Colors.Text,
-
-                TextSize = 11,
-
-                Font =
-                    Enum.Font.GothamSemibold,
-
-                AutoButtonColor = false
-
-            },
-            holder
-        )
-
-        New(
-            "UICorner",
-            {
-
-                CornerRadius =
-                    UDim.new(0, 5)
-
-            },
-            button
-        )
-
-        button.MouseButton1Click:Connect(function()
-
-            Config.TargetPart =
-                partName
-
-            for _, child in
-                ipairs(holder:GetChildren()) do
-
-                if child:IsA(
-                    "TextButton"
-                ) then
-
-                    child.BackgroundColor3 =
-                        Color3.fromRGB(
-                            45,
-                            45,
-                            45
-                        )
-
-                end
-
-            end
-
-            button.BackgroundColor3 =
-                Colors.Menu
-
-        end)
+        if value == default then
+            currentIndex = index
+            break
+        end
 
     end
+
+    local holder = New("Frame", {
+
+        Size =
+            UDim2.new(
+                1,
+                -10,
+                0,
+                42
+            ),
+
+        BackgroundColor3 =
+            Colors.Card,
+
+        BorderSizePixel = 0
+
+    }, parent)
+
+    New("UICorner", {
+
+        CornerRadius =
+            UDim.new(0, 6)
+
+    }, holder)
+
+    New("TextLabel", {
+
+        Size =
+            UDim2.new(
+                1,
+                -120,
+                1,
+                0
+            ),
+
+        Position =
+            UDim2.fromOffset(
+                12,
+                0
+            ),
+
+        BackgroundTransparency = 1,
+
+        Text = text,
+
+        TextColor3 =
+            Colors.Text,
+
+        TextSize = 12,
+
+        Font =
+            Enum.Font.Gotham,
+
+        TextXAlignment =
+            Enum.TextXAlignment.Left
+
+    }, holder)
+
+    local selector = New("TextButton", {
+
+        Size =
+            UDim2.fromOffset(
+                95,
+                27
+            ),
+
+        Position =
+            UDim2.new(
+                1,
+                -107,
+                0.5,
+                -13
+            ),
+
+        BackgroundColor3 =
+            Color3.fromRGB(
+                20,
+                20,
+                20
+            ),
+
+        BorderSizePixel = 0,
+
+        Text =
+            tostring(
+                values[currentIndex]
+            ),
+
+        TextColor3 =
+            Colors.Text,
+
+        TextSize = 11,
+
+        Font =
+            Enum.Font.GothamSemibold,
+
+        AutoButtonColor = false
+
+    }, holder)
+
+    New("UICorner", {
+
+        CornerRadius =
+            UDim.new(0, 5)
+
+    }, selector)
+
+    New("UIStroke", {
+
+        Color =
+            Colors.Border,
+
+        Thickness = 1,
+
+        Transparency = 0.25
+
+    }, selector)
+
+    local function Update()
+
+        selector.Text =
+            tostring(
+                values[currentIndex]
+            )
+
+        if callback then
+
+            callback(
+                values[currentIndex]
+            )
+
+        end
+
+    end
+
+    selector.MouseButton1Click:Connect(function()
+
+        currentIndex += 1
+
+        if currentIndex > #values then
+            currentIndex = 1
+        end
+
+        Update()
+
+    end)
+
+    return selector
+
+end
+
+--==================================================
+-- SECTION CREATOR
+--==================================================
+
+local function CreateSection(
+    parent,
+    title,
+    description
+)
+
+    local section = New("Frame", {
+
+        Size =
+            UDim2.new(
+                1,
+                -10,
+                0,
+                48
+            ),
+
+        BackgroundColor3 =
+            Colors.Panel,
+
+        BorderSizePixel = 0
+
+    }, parent)
+
+    New("UICorner", {
+
+        CornerRadius =
+            UDim.new(0, 6)
+
+    }, section)
+
+    New("TextLabel", {
+
+        Size =
+            UDim2.new(
+                1,
+                -20,
+                0,
+                21
+            ),
+
+        Position =
+            UDim2.fromOffset(
+                10,
+                4
+            ),
+
+        BackgroundTransparency = 1,
+
+        Text = title,
+
+        TextColor3 =
+            Colors.Text,
+
+        TextSize = 13,
+
+        Font =
+            Enum.Font.GothamBold,
+
+        TextXAlignment =
+            Enum.TextXAlignment.Left
+
+    }, section)
+
+    New("TextLabel", {
+
+        Size =
+            UDim2.new(
+                1,
+                -20,
+                0,
+                17
+            ),
+
+        Position =
+            UDim2.fromOffset(
+                10,
+                26
+            ),
+
+        BackgroundTransparency = 1,
+
+        Text = description,
+
+        TextColor3 =
+            Colors.SubText,
+
+        TextSize = 9,
+
+        Font =
+            Enum.Font.Gotham,
+
+        TextXAlignment =
+            Enum.TextXAlignment.Left
+
+    }, section)
+
+    return section
 
 end
 
 --==================================================
 -- COMBAT PAGE
+--==================================================
+
+CreateSection(
+    CombatPage,
+    "Aim Assist",
+    "Assistance for targeting opponents"
+)
+
+--==================================================
+-- AIM ASSIST
 --==================================================
 
 CreateToggle(
@@ -1374,10 +1838,15 @@ CreateToggle(
     Config.AimAssist,
     function(value)
 
-        Config.AimAssist = value
+        Config.AimAssist =
+            value
 
     end
 )
+
+--==================================================
+-- VISIBLE ONLY
+--==================================================
 
 CreateToggle(
     CombatPage,
@@ -1385,37 +1854,36 @@ CreateToggle(
     Config.VisibleOnly,
     function(value)
 
-        Config.VisibleOnly = value
+        Config.VisibleOnly =
+            value
 
     end
 )
 
-CreateToggle(
+--==================================================
+-- TARGET PART
+--==================================================
+
+CreateSelector(
     CombatPage,
-    "Aim FOV",
-    Config.AimFOV,
+    "Target Part",
+    {
+        "Head",
+        "UpperTorso",
+        "HumanoidRootPart"
+    },
+    Config.TargetPart,
     function(value)
 
-        Config.AimFOV = value
+        Config.TargetPart =
+            value
 
     end
 )
 
-CreateValue(
-    CombatPage,
-    "Aim FOV Size",
-    Config.AimFOVSize,
-    function(value)
-
-        Config.AimFOVSize =
-            math.clamp(
-                value,
-                20,
-                1000
-            )
-
-    end
-)
+--==================================================
+-- AIM SMOOTHNESS
+--==================================================
 
 CreateValue(
     CombatPage,
@@ -1423,438 +1891,123 @@ CreateValue(
     Config.AimSmoothness,
     function(value)
 
-        Config.AimSmoothness =
+        value =
             math.clamp(
                 value,
                 0.01,
                 1
             )
 
-    end
-)
-
-CreateTargetSelector(
-    CombatPage
-)
-
---==================================================
--- FOV CIRCLE
---==================================================
-
-local FOVCircle = New(
-    "Frame",
-    {
-
-        Name = "AimFOVCircle",
-
-        AnchorPoint =
-            Vector2.new(
-                0.5,
-                0.5
-            ),
-
-        Position =
-            UDim2.fromScale(
-                0.5,
-                0.5
-            ),
-
-        Size =
-            UDim2.fromOffset(
-                Config.AimFOVSize * 2,
-                Config.AimFOVSize * 2
-            ),
-
-        BackgroundTransparency = 1,
-
-        Visible =
-            Config.AimFOV,
-
-        ZIndex = 2
-
-    },
-    Gui
-)
-
-New(
-    "UICorner",
-    {
-
-        CornerRadius =
-            UDim.new(1, 0)
-
-    },
-    FOVCircle
-)
-
-local FOVStroke = New(
-    "UIStroke",
-    {
-
-        Color =
-            Colors.FOV,
-
-        Thickness = 1.5,
-
-        Transparency = 0.15
-
-    },
-    FOVCircle
-)
-
---==================================================
--- FOV UPDATE
---==================================================
-
-RunService.RenderStepped:Connect(
-    function()
-
-        if not Gui.Parent then
-            return
-        end
-
-        FOVCircle.Visible =
-            Config.AimFOV
-
-        FOVCircle.Size =
-            UDim2.fromOffset(
-                Config.AimFOVSize * 2,
-                Config.AimFOVSize * 2
-            )
-
-        FOVStroke.Color =
-            Colors.FOV
+        Config.AimSmoothness =
+            value
 
     end
 )
 
 --==================================================
--- DRAG SYSTEM
+-- COMBAT INFO
 --==================================================
 
-local dragging = false
-local dragStart = nil
-local startPosition = nil
+local CombatInfo = New("Frame", {
 
-Top.InputBegan:Connect(
-    function(input)
+    Size =
+        UDim2.new(
+            1,
+            -10,
+            0,
+            55
+        ),
 
-        if input.UserInputType ==
-            Enum.UserInputType.MouseButton1
-            or
-            input.UserInputType ==
-            Enum.UserInputType.Touch then
+    BackgroundColor3 =
+        Color3.fromRGB(
+            27,
+            27,
+            27
+        ),
 
-            dragging = true
+    BorderSizePixel = 0
 
-            dragStart =
-                input.Position
+}, CombatPage)
 
-            startPosition =
-                Main.Position
+New("UICorner", {
 
-            input.Changed:Connect(
-                function()
+    CornerRadius =
+        UDim.new(0, 6)
 
-                    if input.UserInputState ==
-                        Enum.UserInputState.End then
+}, CombatInfo)
 
-                        dragging = false
+New("TextLabel", {
 
-                    end
+    Size =
+        UDim2.new(
+            1,
+            -20,
+            1,
+            0
+        ),
 
-                end
-            )
+    Position =
+        UDim2.fromOffset(
+            10,
+            0
+        ),
 
-        end
+    BackgroundTransparency = 1,
 
-    end
-)
+    Text =
+        "Aim FOV is configured in Visuals.",
 
-UserInputService.InputChanged:Connect(
-    function(input)
+    TextColor3 =
+        Colors.SubText,
 
-        if not dragging then
-            return
-        end
+    TextSize = 10,
 
-        if input.UserInputType ==
-            Enum.UserInputType.MouseMovement
-            or
-            input.UserInputType ==
-            Enum.UserInputType.Touch then
+    Font =
+        Enum.Font.Gotham,
 
-            local delta =
-                input.Position -
-                dragStart
+    TextXAlignment =
+        Enum.TextXAlignment.Left,
 
-            Main.Position =
-                UDim2.new(
+    TextYAlignment =
+        Enum.TextYAlignment.Center
 
-                    startPosition.X.Scale,
-
-                    startPosition.X.Offset +
-                        delta.X,
-
-                    startPosition.Y.Scale,
-
-                    startPosition.Y.Offset +
-                        delta.Y
-
-                )
-
-        end
-
-    end
-)
+}, CombatInfo)
 
 --==================================================
--- MINIMIZE BUTTON
---==================================================
-
-local Floating = New(
-    "TextButton",
-    {
-
-        Name =
-            "NeutralizationLogo",
-
-        Size =
-            UDim2.fromOffset(
-                50,
-                50
-            ),
-
-        Position =
-            UDim2.new(
-                0,
-                20,
-                0.5,
-                -25
-            ),
-
-        BackgroundColor3 =
-            Colors.Menu,
-
-        BorderSizePixel = 0,
-
-        Text = "NH",
-
-        TextColor3 =
-            Colors.Text,
-
-        TextSize = 14,
-
-        Font =
-            Enum.Font.GothamBold,
-
-        Visible = false,
-
-        AutoButtonColor = false
-
-    },
-    Gui
-)
-
-New(
-    "UICorner",
-    {
-
-        CornerRadius =
-            UDim.new(1, 0)
-
-    },
-    Floating
-)
-
-Minimize.MouseButton1Click:Connect(
-    function()
-
-        Tween(
-            Main,
-            {
-                Size =
-                    UDim2.fromOffset(
-                        0,
-                        0
-                    )
-            },
-            0.2
-        ):Play()
-
-        task.wait(0.2)
-
-        Main.Visible = false
-        Floating.Visible = true
-
-    end
-)
-
-Floating.MouseButton1Click:Connect(
-    function()
-
-        Floating.Visible = false
-
-        Main.Visible = true
-
-        Main.Size =
-            UDim2.fromOffset(
-                0,
-                0
-            )
-
-        Tween(
-            Main,
-            {
-                Size =
-                    UDim2.fromOffset(
-                        520,
-                        320
-                    )
-            },
-            0.25
-        ):Play()
-
-    end
-)
-
---==================================================
--- INITIAL PAGE
+-- PAGE OPEN
 --==================================================
 
 SetPage(CombatPage)
 
---==================================================
--- INITIAL OPEN ANIMATION
---==================================================
-
-Main.Size =
-    UDim2.fromOffset(
-        0,
-        0
-    )
-
-Tween(
-    Main,
-    {
-        Size =
-            UDim2.fromOffset(
-                520,
-                320
-            )
-    },
-    0.35
-):Play()
+print("[Lunar Hub] Part 2/6 loaded.")
 
 --==================================================
--- PART 1B END
+-- LUNAR HUB v3.0
+-- PART 3/6
+-- AIM ASSIST LOGIC
 --==================================================
 
---//==================================================
---// NEUTRALIZATION HUB
---// PART 2A / 10
---// AIM ASSIST
---//==================================================
+--==================================================
+-- CAMERA
+--==================================================
 
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-
-local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 --==================================================
--- AIM HELPERS
+-- CHARACTER HELPERS
 --==================================================
 
-local function GetTargetPart(character)
-
-    if not character then
-        return nil
-    end
-
-    if Config.TargetPart == "Head" then
-
-        return character:FindFirstChild("Head")
-
-    elseif Config.TargetPart == "Torso" then
-
-        return character:FindFirstChild("UpperTorso")
-            or character:FindFirstChild("Torso")
-            or character:FindFirstChild("HumanoidRootPart")
-
-    elseif Config.TargetPart == "Random" then
-
-        local parts = {}
-
-        local head =
-            character:FindFirstChild("Head")
-
-        local torso =
-            character:FindFirstChild("UpperTorso")
-            or character:FindFirstChild("Torso")
-
-        local root =
-            character:FindFirstChild("HumanoidRootPart")
-
-        if head then
-            table.insert(parts, head)
-        end
-
-        if torso then
-            table.insert(parts, torso)
-        end
-
-        if root then
-            table.insert(parts, root)
-        end
-
-        if #parts > 0 then
-
-            return parts[
-                math.random(
-                    1,
-                    #parts
-                )
-            ]
-
-        end
-
-    end
-
-    return character:FindFirstChild(
-        "HumanoidRootPart"
-    )
-
-end
-
---==================================================
--- CHARACTER VALIDATION
---==================================================
-
-local function IsValidTarget(player)
+local function GetCharacter(player)
 
     if not player then
-        return false
-    end
-
-    if player == LocalPlayer then
-        return false
-    end
-
-    -- Team Check
-    if player.Team ~= nil
-        and LocalPlayer.Team ~= nil
-        and player.Team == LocalPlayer.Team then
-
-        return false
-
+        return nil
     end
 
     local character =
         player.Character
 
     if not character then
-        return false
+        return nil
     end
 
     local humanoid =
@@ -1863,21 +2016,111 @@ local function IsValidTarget(player)
         )
 
     if not humanoid then
-        return false
+        return nil
     end
 
     if humanoid.Health <= 0 then
+        return nil
+    end
+
+    return character
+
+end
+
+--==================================================
+-- TEAM CHECK
+--==================================================
+
+local function IsTeammate(player)
+
+    if not Config.TeamCheck then
         return false
     end
 
-    local targetPart =
-        GetTargetPart(character)
-
-    if not targetPart then
+    if not LocalPlayer.Team then
         return false
     end
 
-    return true
+    if not player.Team then
+        return false
+    end
+
+    return player.Team == LocalPlayer.Team
+
+end
+
+--==================================================
+-- TARGET PART
+--==================================================
+
+local function GetTargetPart(character)
+
+    if not character then
+        return nil
+    end
+
+    local part =
+        character:FindFirstChild(
+            Config.TargetPart
+        )
+
+    if part and part:IsA("BasePart") then
+        return part
+    end
+
+    -- Fallbacks
+    local head =
+        character:FindFirstChild("Head")
+
+    if head and head:IsA("BasePart") then
+        return head
+    end
+
+    local root =
+        character:FindFirstChild(
+            "HumanoidRootPart"
+        )
+
+    if root and root:IsA("BasePart") then
+        return root
+    end
+
+    return nil
+
+end
+
+--==================================================
+-- LOCAL CHARACTER CHECK
+--==================================================
+
+local function IsLocalCharacter(character)
+
+    if not character then
+        return false
+    end
+
+    return character ==
+        LocalPlayer.Character
+
+end
+
+--==================================================
+-- SCREEN POSITION
+--==================================================
+
+local function GetScreenPosition(part)
+
+    if not part then
+        return nil, false
+    end
+
+    local screenPosition,
+        onScreen =
+        Camera:WorldToViewportPoint(
+            part.Position
+        )
+
+    return screenPosition, onScreen
 
 end
 
@@ -1885,20 +2128,13 @@ end
 -- VISIBILITY CHECK
 --==================================================
 
-local function IsVisible(targetPart)
+local function IsVisible(part, character)
 
     if not Config.VisibleOnly then
         return true
     end
 
-    if not targetPart then
-        return false
-    end
-
-    local character =
-        LocalPlayer.Character
-
-    if not character then
+    if not part or not character then
         return false
     end
 
@@ -1906,25 +2142,29 @@ local function IsVisible(targetPart)
         Camera.CFrame.Position
 
     local direction =
-        targetPart.Position - origin
+        part.Position - origin
 
-    local params =
+    local rayParams =
         RaycastParams.new()
 
-    params.FilterType =
+    rayParams.FilterType =
         Enum.RaycastFilterType.Exclude
 
-    params.FilterDescendantsInstances = {
-        character
+    rayParams.FilterDescendantsInstances = {
+
+        LocalPlayer.Character,
+
+        Camera
+
     }
 
-    params.IgnoreWater = true
+    rayParams.IgnoreWater = true
 
     local result =
         workspace:Raycast(
             origin,
             direction,
-            params
+            rayParams
         )
 
     if not result then
@@ -1932,103 +2172,138 @@ local function IsVisible(targetPart)
     end
 
     return result.Instance:IsDescendantOf(
-        targetPart.Parent
+        character
     )
 
 end
 
 --==================================================
--- SCREEN DISTANCE
+-- DISTANCE FROM FOV CENTER
 --==================================================
 
-local function GetScreenDistance(
-    targetPart
-)
+local function GetMousePosition()
 
-    local screenPosition,
-        onScreen =
-        Camera:WorldToViewportPoint(
-            targetPart.Position
-        )
+    local mouseLocation =
+        UserInputService:GetMouseLocation()
 
-    if not onScreen then
-        return nil
-    end
-
-    local viewport =
-        Camera.ViewportSize
-
-    local center =
-        Vector2.new(
-            viewport.X / 2,
-            viewport.Y / 2
-        )
-
-    local targetPosition =
-        Vector2.new(
-            screenPosition.X,
-            screenPosition.Y
-        )
-
-    return (
-        targetPosition - center
-    ).Magnitude
+    return Vector2.new(
+        mouseLocation.X,
+        mouseLocation.Y
+    )
 
 end
 
 --==================================================
--- FIND BEST TARGET
+-- TARGET SEARCH
 --==================================================
 
 local function GetBestTarget()
 
+    if not Camera then
+        Camera =
+            workspace.CurrentCamera
+    end
+
+    if not Camera then
+        return nil
+    end
+
+    local bestPlayer = nil
     local bestPart = nil
-    local bestDistance = math.huge
+    local bestDistance =
+        math.huge
 
-    for _, player in
-        ipairs(Players:GetPlayers()) do
+    local center =
+        GetMousePosition()
 
-        if IsValidTarget(player) then
+    local fovRadius =
+        math.max(
+            1,
+            Config.AimFOVSize
+        )
 
-            local character =
-                player.Character
+    for _, player in ipairs(
+        Players:GetPlayers()
+    ) do
 
-            local targetPart =
-                GetTargetPart(character)
+        if player ~= LocalPlayer then
 
-            if targetPart then
+            --==================================================
+            -- TEAM CHECK
+            --==================================================
 
-                local distance =
-                    GetScreenDistance(
-                        targetPart
-                    )
+            if not IsTeammate(player) then
 
-                if distance then
+                local character =
+                    GetCharacter(player)
 
-                    local insideFOV =
-                        true
+                if character and
+                    not IsLocalCharacter(
+                        character
+                    ) then
 
-                    if Config.AimFOV then
+                    local part =
+                        GetTargetPart(
+                            character
+                        )
 
-                        insideFOV =
-                            distance <=
-                            Config.AimFOVSize
+                    if part then
 
-                    end
+                        local screenPosition,
+                            onScreen =
+                            GetScreenPosition(
+                                part
+                            )
 
-                    if insideFOV
-                        and IsVisible(
-                            targetPart
-                        ) then
+                        if onScreen then
 
-                        if distance <
-                            bestDistance then
+                            local screenPoint =
+                                Vector2.new(
+                                    screenPosition.X,
+                                    screenPosition.Y
+                                )
 
-                            bestDistance =
-                                distance
+                            local distance =
+                                (
+                                    screenPoint -
+                                    center
+                                ).Magnitude
 
-                            bestPart =
-                                targetPart
+                            --==================================================
+                            -- FOV CHECK
+                            --==================================================
+
+                            if distance <=
+                                fovRadius
+                            then
+
+                                --==================================================
+                                -- VISIBLE CHECK
+                                --==================================================
+
+                                if IsVisible(
+                                    part,
+                                    character
+                                ) then
+
+                                    if distance <
+                                        bestDistance
+                                    then
+
+                                        bestDistance =
+                                            distance
+
+                                        bestPlayer =
+                                            player
+
+                                        bestPart =
+                                            part
+
+                                    end
+
+                                end
+
+                            end
 
                         end
 
@@ -2042,18 +2317,23 @@ local function GetBestTarget()
 
     end
 
-    return bestPart
+    return bestPlayer, bestPart
 
 end
 
 --==================================================
--- AIM FUNCTION
+-- AIM AT TARGET
 --==================================================
 
-local function AimAt(targetPart)
+local function AimAt(part)
 
-    if not targetPart then
+    if not part then
         return
+    end
+
+    if not Camera then
+        Camera =
+            workspace.CurrentCamera
     end
 
     if not Camera then
@@ -2064,7 +2344,7 @@ local function AimAt(targetPart)
         Camera.CFrame.Position
 
     local targetPosition =
-        targetPart.Position
+        part.Position
 
     local direction =
         targetPosition -
@@ -2080,7 +2360,7 @@ local function AimAt(targetPart)
             targetPosition
         )
 
-    local smooth =
+    local smoothness =
         math.clamp(
             Config.AimSmoothness,
             0.01,
@@ -2090,16 +2370,21 @@ local function AimAt(targetPart)
     Camera.CFrame =
         Camera.CFrame:Lerp(
             targetCFrame,
-            smooth
+            smoothness
         )
 
 end
 
 --==================================================
--- AIM ASSIST LOOP
+-- AIM ASSIST STATE
 --==================================================
 
-local CurrentAimTarget = nil
+local CurrentTarget = nil
+local CurrentTargetPart = nil
+
+--==================================================
+-- AIM ASSIST LOOP
+--==================================================
 
 local AimConnection
 
@@ -2109,7 +2394,8 @@ AimConnection =
 
             if not Config.AimAssist then
 
-                CurrentAimTarget = nil
+                CurrentTarget = nil
+                CurrentTargetPart = nil
 
                 return
 
@@ -2117,28 +2403,26 @@ AimConnection =
 
             if not LocalPlayer.Character then
 
-                CurrentAimTarget = nil
+                CurrentTarget = nil
+                CurrentTargetPart = nil
 
                 return
 
             end
 
-            Camera =
-                workspace.CurrentCamera
-
-            if not Camera then
-                return
-            end
-
-            local target =
+            local targetPlayer,
+                targetPart =
                 GetBestTarget()
 
-            CurrentAimTarget =
-                target
+            CurrentTarget =
+                targetPlayer
 
-            if target then
+            CurrentTargetPart =
+                targetPart
 
-                AimAt(target)
+            if targetPart then
+
+                AimAt(targetPart)
 
             end
 
@@ -2146,32 +2430,14 @@ AimConnection =
     )
 
 --==================================================
--- TARGET CLEANUP
---==================================================
-
-Players.PlayerRemoving:Connect(
-    function(player)
-
-        if CurrentAimTarget
-            and CurrentAimTarget:IsDescendantOf(
-                player.Character or workspace
-            ) then
-
-            CurrentAimTarget = nil
-
-        end
-
-    end
-)
-
---==================================================
--- RESPAWN SAFETY
+-- CHARACTER RESPAWN SUPPORT
 --==================================================
 
 LocalPlayer.CharacterAdded:Connect(
     function()
 
-        CurrentAimTarget = nil
+        CurrentTarget = nil
+        CurrentTargetPart = nil
 
         task.wait(0.5)
 
@@ -2182,60 +2448,192 @@ LocalPlayer.CharacterAdded:Connect(
 )
 
 --==================================================
--- AIM FOV UPDATE
+-- CAMERA UPDATE SUPPORT
+--==================================================
+
+workspace:GetPropertyChangedSignal(
+    "CurrentCamera"
+):Connect(function()
+
+    Camera =
+        workspace.CurrentCamera
+
+end)
+
+--==================================================
+-- AIM SETTINGS SAFETY
+--==================================================
+
+Config.AimFOVSize =
+    math.clamp(
+        tonumber(
+            Config.AimFOVSize
+        ) or 150,
+        25,
+        1000
+    )
+
+Config.AimSmoothness =
+    math.clamp(
+        tonumber(
+            Config.AimSmoothness
+        ) or 0.18,
+        0.01,
+        1
+    )
+
+--==================================================
+-- DEBUG STATUS
+--==================================================
+
+local AimStatus =
+    New(
+        "TextLabel",
+        {
+
+            Size =
+                UDim2.new(
+                    1,
+                    -10,
+                    0,
+                    36
+                ),
+
+            BackgroundColor3 =
+                Colors.Card,
+
+            BorderSizePixel = 0,
+
+            Text =
+                "Aim Assist: Ready",
+
+            TextColor3 =
+                Colors.SubText,
+
+            TextSize = 10,
+
+            Font =
+                Enum.Font.Gotham,
+
+            TextXAlignment =
+                Enum.TextXAlignment.Left,
+
+            TextYAlignment =
+                Enum.TextYAlignment.Center
+
+        },
+        CombatPage
+    )
+
+New(
+    "UICorner",
+    {
+
+        CornerRadius =
+            UDim.new(0, 6)
+
+    },
+    AimStatus
+)
+
+--==================================================
+-- AIM STATUS UPDATE
+--==================================================
+
+local function UpdateAimStatus()
+
+    if not Config.AimAssist then
+
+        AimStatus.Text =
+            "Aim Assist: Disabled"
+
+        AimStatus.TextColor3 =
+            Colors.SubText
+
+        return
+
+    end
+
+    if CurrentTarget then
+
+        AimStatus.Text =
+            "Aim Assist: Targeting " ..
+            CurrentTarget.Name
+
+        AimStatus.TextColor3 =
+            Colors.Text
+
+    else
+
+        AimStatus.Text =
+            "Aim Assist: Searching..."
+
+        AimStatus.TextColor3 =
+            Colors.SubText
+
+    end
+
+end
+
+--==================================================
+-- STATUS LOOP
 --==================================================
 
 RunService.RenderStepped:Connect(
     function()
 
-        if not FOVCircle then
-            return
+        if AimStatus then
+            UpdateAimStatus()
         end
-
-        FOVCircle.Visible =
-            Config.AimFOV
-
-        FOVCircle.Size =
-            UDim2.fromOffset(
-                Config.AimFOVSize * 2,
-                Config.AimFOVSize * 2
-            )
 
     end
 )
 
 --==================================================
--- PART 2A END
+-- CLEANUP
 --==================================================
 
---//==================================================
---// NEUTRALIZATION HUB
---// PART 2B / 10
---// VISUALS + 2D ESP
---//==================================================
+local function StopAimAssist()
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+    if AimConnection then
 
-local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
+        AimConnection:Disconnect()
 
---==================================================
--- VISUAL CONFIG
---==================================================
+        AimConnection = nil
 
-Config.ESP = false
-Config.TeamCheck = true
+    end
 
-Config.BoxESP = true
-Config.Names = true
-Config.Health = true
-Config.Distance = true
-Config.Snapline = false
-Config.ChestESP = false
+    CurrentTarget = nil
+    CurrentTargetPart = nil
+
+end
 
 --==================================================
--- VISUAL PAGE CONTROLS
+-- PART 3 COMPLETE
+--==================================================
+
+print(
+    "[Lunar Hub] Part 3/6 loaded."
+)
+
+--==================================================
+-- LUNAR HUB v3.0
+-- PART 4/6
+-- VISUALS + ESP + AIM FOV
+--==================================================
+
+--==================================================
+-- VISUALS SECTION
+--==================================================
+
+CreateSection(
+    VisualPage,
+    "ESP",
+    "Player visual information"
+)
+
+--==================================================
+-- ESP
 --==================================================
 
 CreateToggle(
@@ -2249,6 +2647,10 @@ CreateToggle(
     end
 )
 
+--==================================================
+-- TEAM CHECK
+--==================================================
+
 CreateToggle(
     VisualPage,
     "Team Check",
@@ -2259,6 +2661,10 @@ CreateToggle(
 
     end
 )
+
+--==================================================
+-- BOX ESP
+--==================================================
 
 CreateToggle(
     VisualPage,
@@ -2271,6 +2677,10 @@ CreateToggle(
     end
 )
 
+--==================================================
+-- NAMES
+--==================================================
+
 CreateToggle(
     VisualPage,
     "Names",
@@ -2281,6 +2691,10 @@ CreateToggle(
 
     end
 )
+
+--==================================================
+-- HEALTH
+--==================================================
 
 CreateToggle(
     VisualPage,
@@ -2293,6 +2707,10 @@ CreateToggle(
     end
 )
 
+--==================================================
+-- DISTANCE
+--==================================================
+
 CreateToggle(
     VisualPage,
     "Distance",
@@ -2304,66 +2722,78 @@ CreateToggle(
     end
 )
 
-CreateToggle(
+--==================================================
+-- AIM FOV SECTION
+--==================================================
+
+CreateSection(
     VisualPage,
-    "Snapline",
-    Config.Snapline,
-    function(value)
-
-        Config.Snapline = value
-
-    end
+    "Aim FOV",
+    "Configure the Aim Assist field of view"
 )
 
+--==================================================
+-- AIM FOV TOGGLE
+--==================================================
+
 CreateToggle(
     VisualPage,
-    "Chest ESP",
-    Config.ChestESP,
+    "Aim FOV",
+    Config.AimFOV,
     function(value)
 
-        Config.ChestESP = value
+        Config.AimFOV = value
 
     end
 )
 
 --==================================================
--- AIM FOV SIZE MOVED TO VISUALS
+-- AIM FOV SIZE
 --==================================================
 
 CreateValue(
     VisualPage,
-    "Aim FOV Size",
+    "FOV Size",
     Config.AimFOVSize,
     function(value)
 
-        Config.AimFOVSize =
+        value =
             math.clamp(
-                value,
-                20,
+                math.floor(value),
+                25,
                 1000
             )
+
+        Config.AimFOVSize =
+            value
 
     end
 )
 
 --==================================================
--- ESP GUI CONTAINER
+-- FOV CIRCLE
 --==================================================
 
-local ESPContainer = New(
+local FOVCircle = New(
     "Frame",
     {
 
-        Name = "ESPContainer",
+        Name = "AimFOVCircle",
 
         Size =
-            UDim2.fromScale(
-                1,
-                1
+            UDim2.fromOffset(
+                Config.AimFOVSize * 2,
+                Config.AimFOVSize * 2
+            ),
+
+        AnchorPoint =
+            Vector2.new(
+                0.5,
+                0.5
             ),
 
         Position =
-            UDim2.fromScale(
+            UDim2.fromOffset(
                 0,
                 0
             ),
@@ -2372,70 +2802,122 @@ local ESPContainer = New(
 
         BorderSizePixel = 0,
 
-        Visible = true,
+        Visible = false,
 
-        ZIndex = 20
+        ZIndex = 100
 
     },
     Gui
 )
 
+New(
+    "UICorner",
+    {
+
+        CornerRadius =
+            UDim.new(
+                1,
+                0
+            )
+
+    },
+    FOVCircle
+)
+
+New(
+    "UIStroke",
+    {
+
+        Color =
+            Colors.Menu,
+
+        Thickness = 2,
+
+        Transparency = 0.1
+
+    },
+    FOVCircle
+)
+
 --==================================================
--- ESP OBJECT STORAGE
+-- FOV CIRCLE UPDATE
+--==================================================
+
+local function UpdateFOVCircle()
+
+    if not FOVCircle then
+        return
+    end
+
+    local mouse =
+        UserInputService:GetMouseLocation()
+
+    local radius =
+        math.clamp(
+            Config.AimFOVSize,
+            25,
+            1000
+        )
+
+    FOVCircle.Size =
+        UDim2.fromOffset(
+            radius * 2,
+            radius * 2
+        )
+
+    FOVCircle.Position =
+        UDim2.fromOffset(
+            mouse.X,
+            mouse.Y
+        )
+
+    FOVCircle.Visible =
+        Config.AimFOV
+
+end
+
+RunService.RenderStepped:Connect(
+    function()
+
+        UpdateFOVCircle()
+
+    end
+)
+
+--==================================================
+-- ESP STORAGE
 --==================================================
 
 local ESPObjects = {}
 
 --==================================================
--- ESP COLORS
+-- CREATE ESP
 --==================================================
 
-local ESPColor =
-    Colors.ESP
+local function CreateESP(player)
 
-local TeamColor =
-    Color3.fromRGB(
-        80,
-        170,
-        255
-    )
-
---==================================================
--- CREATE ESP OBJECT
---==================================================
-
-local function CreateESPObject(player)
-
-    if ESPObjects[player] then
-        return ESPObjects[player]
+    if not player then
+        return
     end
 
-    local container = New(
-        "Frame",
-        {
+    if player == LocalPlayer then
+        return
+    end
 
-            Name =
-                "ESP_" ..
-                player.Name,
+    if ESPObjects[player] then
+        return
+    end
 
-            BackgroundTransparency = 1,
+    --==================================================
+    -- BOX
+    --==================================================
 
-            BorderSizePixel = 0,
-
-            Visible = false,
-
-            ZIndex = 20
-
-        },
-        ESPContainer
-    )
-
-    -- 2D BOX
     local box = New(
         "Frame",
         {
 
-            Name = "Box",
+            Name =
+                "Box",
 
             BackgroundTransparency = 1,
 
@@ -2443,19 +2925,20 @@ local function CreateESPObject(player)
 
             Visible = false,
 
-            ZIndex = 21
+            ZIndex = 50
 
         },
-        container
+        Gui
     )
 
-    local boxStroke = New(
+    New(
         "UIStroke",
         {
 
-            Color = ESPColor,
+            Color =
+                Colors.Menu,
 
-            Thickness = 1.5,
+            Thickness = 2,
 
             Transparency = 0
 
@@ -2463,19 +2946,21 @@ local function CreateESPObject(player)
         box
     )
 
+    --==================================================
     -- NAME
+    --==================================================
+
     local nameLabel = New(
         "TextLabel",
         {
 
-            Name = "Name",
-
-            BackgroundTransparency = 1,
+            Name =
+                "Name",
 
             Size =
                 UDim2.fromOffset(
                     180,
-                    18
+                    20
                 ),
 
             AnchorPoint =
@@ -2484,16 +2969,12 @@ local function CreateESPObject(player)
                     1
                 ),
 
-            Text = player.Name,
+            BackgroundTransparency = 1,
 
-            TextColor3 = ESPColor,
+            TextColor3 =
+                Colors.Text,
 
-            TextSize = 12,
-
-            Font =
-                Enum.Font.GothamBold,
-
-            TextStrokeTransparency = 0.25,
+            TextStrokeTransparency = 0,
 
             TextStrokeColor3 =
                 Color3.new(
@@ -2502,48 +2983,44 @@ local function CreateESPObject(player)
                     0
                 ),
 
+            TextSize = 11,
+
+            Font =
+                Enum.Font.GothamBold,
+
+            Text = "",
+
             Visible = false,
 
-            ZIndex = 22
+            ZIndex = 51
 
         },
-        container
+        Gui
     )
 
+    --==================================================
     -- HEALTH
+    --==================================================
+
     local healthLabel = New(
         "TextLabel",
         {
 
-            Name = "Health",
-
-            BackgroundTransparency = 1,
+            Name =
+                "Health",
 
             Size =
                 UDim2.fromOffset(
-                    180,
+                    80,
                     18
                 ),
 
-            AnchorPoint =
-                Vector2.new(
-                    0.5,
-                    0
-                ),
+            BackgroundTransparency = 1,
 
             TextColor3 =
-                Color3.fromRGB(
-                    100,
-                    255,
-                    100
-                ),
+                Colors.Text,
 
-            TextSize = 11,
-
-            Font =
-                Enum.Font.GothamBold,
-
-            TextStrokeTransparency = 0.25,
+            TextStrokeTransparency = 0,
 
             TextStrokeColor3 =
                 Color3.new(
@@ -2552,43 +3029,44 @@ local function CreateESPObject(player)
                     0
                 ),
 
+            TextSize = 10,
+
+            Font =
+                Enum.Font.GothamSemibold,
+
+            Text = "",
+
             Visible = false,
 
-            ZIndex = 22
+            ZIndex = 51
 
         },
-        container
+        Gui
     )
 
+    --==================================================
     -- DISTANCE
+    --==================================================
+
     local distanceLabel = New(
         "TextLabel",
         {
 
-            Name = "Distance",
-
-            BackgroundTransparency = 1,
+            Name =
+                "Distance",
 
             Size =
                 UDim2.fromOffset(
-                    180,
+                    100,
                     18
                 ),
 
-            AnchorPoint =
-                Vector2.new(
-                    0.5,
-                    0
-                ),
+            BackgroundTransparency = 1,
 
-            TextColor3 = Colors.Text,
+            TextColor3 =
+                Colors.SubText,
 
-            TextSize = 11,
-
-            Font =
-                Enum.Font.Gotham,
-
-            TextStrokeTransparency = 0.25,
+            TextStrokeTransparency = 0,
 
             TextStrokeColor3 =
                 Color3.new(
@@ -2597,71 +3075,40 @@ local function CreateESPObject(player)
                     0
                 ),
 
-            Visible = false,
+            TextSize = 10,
 
-            ZIndex = 22
+            Font =
+                Enum.Font.Gotham,
 
-        },
-        container
-    )
-
-    -- SNAPLINE
-    local snapline = New(
-        "Frame",
-        {
-
-            Name = "Snapline",
-
-            AnchorPoint =
-                Vector2.new(
-                    0.5,
-                    0
-                ),
-
-            BackgroundColor3 =
-                ESPColor,
-
-            BorderSizePixel = 0,
+            Text = "",
 
             Visible = false,
 
-            ZIndex = 19
+            ZIndex = 51
 
         },
-        container
+        Gui
     )
 
-    local data = {
-
-        Player = player,
-
-        Container = container,
+    ESPObjects[player] = {
 
         Box = box,
-
-        BoxStroke = boxStroke,
 
         Name = nameLabel,
 
         Health = healthLabel,
 
-        Distance = distanceLabel,
-
-        Snapline = snapline
+        Distance = distanceLabel
 
     }
-
-    ESPObjects[player] = data
-
-    return data
 
 end
 
 --==================================================
--- REMOVE ESP OBJECT
+-- REMOVE ESP
 --==================================================
 
-local function RemoveESPObject(player)
+local function RemoveESP(player)
 
     local data =
         ESPObjects[player]
@@ -2670,8 +3117,14 @@ local function RemoveESPObject(player)
         return
     end
 
-    if data.Container then
-        data.Container:Destroy()
+    for _, object in pairs(data) do
+
+        if object then
+            pcall(function()
+                object:Destroy()
+            end)
+        end
+
     end
 
     ESPObjects[player] = nil
@@ -2679,30 +3132,32 @@ local function RemoveESPObject(player)
 end
 
 --==================================================
--- TEAM CHECK
+-- PLAYER ESP INITIALIZE
 --==================================================
 
-local function IsESPAllowed(player)
+for _, player in ipairs(
+    Players:GetPlayers()
+) do
 
-    if player == LocalPlayer then
-        return false
-    end
-
-    if not Config.TeamCheck then
-        return true
-    end
-
-    if LocalPlayer.Team == nil then
-        return true
-    end
-
-    if player.Team == nil then
-        return true
-    end
-
-    return player.Team ~= LocalPlayer.Team
+    CreateESP(player)
 
 end
+
+Players.PlayerAdded:Connect(
+    function(player)
+
+        CreateESP(player)
+
+    end
+)
+
+Players.PlayerRemoving:Connect(
+    function(player)
+
+        RemoveESP(player)
+
+    end
+)
 
 --==================================================
 -- GET CHARACTER BOUNDS
@@ -2716,145 +3171,159 @@ local function GetCharacterBounds(
         return nil
     end
 
-    local root =
-        character:FindFirstChild(
-            "HumanoidRootPart"
-        )
+    local parts = {}
 
-    if not root then
-        return nil
-    end
+    for _, object in ipairs(
+        character:GetDescendants()
+    ) do
 
-    local humanoid =
-        character:FindFirstChildOfClass(
-            "Humanoid"
-        )
+        if object:IsA("BasePart") then
 
-    if not humanoid then
-        return nil
-    end
-
-    if humanoid.Health <= 0 then
-        return nil
-    end
-
-    local cf, size =
-        character:GetBoundingBox()
-
-    local half =
-        size / 2
-
-    local corners = {
-
-        cf * Vector3.new(
-            -half.X,
-            -half.Y,
-            -half.Z
-        ),
-
-        cf * Vector3.new(
-            -half.X,
-            -half.Y,
-            half.Z
-        ),
-
-        cf * Vector3.new(
-            -half.X,
-            half.Y,
-            -half.Z
-        ),
-
-        cf * Vector3.new(
-            -half.X,
-            half.Y,
-            half.Z
-        ),
-
-        cf * Vector3.new(
-            half.X,
-            -half.Y,
-            -half.Z
-        ),
-
-        cf * Vector3.new(
-            half.X,
-            -half.Y,
-            half.Z
-        ),
-
-        cf * Vector3.new(
-            half.X,
-            half.Y,
-            -half.Z
-        ),
-
-        cf * Vector3.new(
-            half.X,
-            half.Y,
-            half.Z
-        )
-
-    }
-
-    local minX = math.huge
-    local minY = math.huge
-
-    local maxX = -math.huge
-    local maxY = -math.huge
-
-    local visible = false
-
-    for _, corner in ipairs(corners) do
-
-        local screen,
-            onScreen =
-            Camera:WorldToViewportPoint(
-                corner
+            table.insert(
+                parts,
+                object
             )
-
-        if screen.Z > 0 then
-
-            visible = true
-
-            minX =
-                math.min(
-                    minX,
-                    screen.X
-                )
-
-            minY =
-                math.min(
-                    minY,
-                    screen.Y
-                )
-
-            maxX =
-                math.max(
-                    maxX,
-                    screen.X
-                )
-
-            maxY =
-                math.max(
-                    maxY,
-                    screen.Y
-                )
 
         end
 
     end
 
-    if not visible then
+    if #parts == 0 then
+        return nil
+    end
+
+    local minX =
+        math.huge
+
+    local minY =
+        math.huge
+
+    local maxX =
+        -math.huge
+
+    local maxY =
+        -math.huge
+
+    local visibleCount = 0
+
+    for _, part in ipairs(parts) do
+
+        local halfSize =
+            part.Size / 2
+
+        local corners = {
+
+            part.CFrame *
+                Vector3.new(
+                    -halfSize.X,
+                    -halfSize.Y,
+                    -halfSize.Z
+                ),
+
+            part.CFrame *
+                Vector3.new(
+                    -halfSize.X,
+                    -halfSize.Y,
+                    halfSize.Z
+                ),
+
+            part.CFrame *
+                Vector3.new(
+                    -halfSize.X,
+                    halfSize.Y,
+                    -halfSize.Z
+                ),
+
+            part.CFrame *
+                Vector3.new(
+                    -halfSize.X,
+                    halfSize.Y,
+                    halfSize.Z
+                ),
+
+            part.CFrame *
+                Vector3.new(
+                    halfSize.X,
+                    -halfSize.Y,
+                    -halfSize.Z
+                ),
+
+            part.CFrame *
+                Vector3.new(
+                    halfSize.X,
+                    -halfSize.Y,
+                    halfSize.Z
+                ),
+
+            part.CFrame *
+                Vector3.new(
+                    halfSize.X,
+                    halfSize.Y,
+                    -halfSize.Z
+                ),
+
+            part.CFrame *
+                Vector3.new(
+                    halfSize.X,
+                    halfSize.Y,
+                    halfSize.Z
+                )
+
+        }
+
+        for _, worldPoint in ipairs(
+            corners
+        ) do
+
+            local screenPoint,
+                onScreen =
+                Camera:WorldToViewportPoint(
+                    worldPoint
+                )
+
+            if onScreen then
+
+                visibleCount += 1
+
+                minX =
+                    math.min(
+                        minX,
+                        screenPoint.X
+                    )
+
+                minY =
+                    math.min(
+                        minY,
+                        screenPoint.Y
+                    )
+
+                maxX =
+                    math.max(
+                        maxX,
+                        screenPoint.X
+                    )
+
+                maxY =
+                    math.max(
+                        maxY,
+                        screenPoint.Y
+                    )
+
+            end
+
+        end
+
+    end
+
+    if visibleCount == 0 then
         return nil
     end
 
     return {
 
-        MinX = minX,
-        MinY = minY,
+        X = minX,
 
-        MaxX = maxX,
-        MaxY = maxY,
+        Y = minY,
 
         Width =
             maxX - minX,
@@ -2867,354 +3336,223 @@ local function GetCharacterBounds(
 end
 
 --==================================================
--- ROTATE SNAPLINE
---==================================================
-
-local function SetLine(
-    line,
-    fromPosition,
-    toPosition
-)
-
-    local difference =
-        toPosition -
-        fromPosition
-
-    local length =
-        difference.Magnitude
-
-    if length <= 0 then
-        line.Visible = false
-        return
-    end
-
-    line.Position =
-        UDim2.fromOffset(
-            fromPosition.X,
-            fromPosition.Y
-        )
-
-    line.Size =
-        UDim2.fromOffset(
-            1,
-            length
-        )
-
-    line.Rotation =
-        math.deg(
-            math.atan2(
-                difference.X,
-                difference.Y
-            )
-        )
-
-    line.Visible = true
-
-end
-
---==================================================
 -- UPDATE ESP
 --==================================================
 
-local function UpdateESP(
-    player,
-    data
-)
+local function UpdateESP()
 
-    if not Config.ESP then
+    for player, data in pairs(
+        ESPObjects
+    ) do
 
-        data.Container.Visible = false
+        local character =
+            player.Character
 
-        return
+        local shouldShow =
+            Config.ESP
 
-    end
+        --==================================================
+        -- TEAM CHECK
+        --==================================================
 
-    if not IsESPAllowed(player) then
+        if shouldShow and
+            IsTeammate(player)
+        then
 
-        data.Container.Visible = false
-
-        return
-
-    end
-
-    local character =
-        player.Character
-
-    if not character then
-
-        data.Container.Visible = false
-
-        return
-
-    end
-
-    local humanoid =
-        character:FindFirstChildOfClass(
-            "Humanoid"
-        )
-
-    if not humanoid
-        or humanoid.Health <= 0 then
-
-        data.Container.Visible = false
-
-        return
-
-    end
-
-    local bounds =
-        GetCharacterBounds(
-            character
-        )
-
-    if not bounds then
-
-        data.Container.Visible = false
-
-        return
-
-    end
-
-    data.Container.Visible = true
-
-    --==================================================
-    -- COLOR
-    --==================================================
-
-    local color = ESPColor
-
-    if Config.TeamCheck
-        and player.Team ~= nil
-        and LocalPlayer.Team ~= nil
-        and player.Team ~= LocalPlayer.Team then
-
-        color = ESPColor
-
-    end
-
-    data.BoxStroke.Color = color
-
-    data.Name.TextColor3 = color
-
-    data.Snapline.BackgroundColor3 =
-        color
-
-    --==================================================
-    -- BOX
-    --==================================================
-
-    if Config.BoxESP then
-
-        data.Box.Visible = true
-
-        data.Box.Position =
-            UDim2.fromOffset(
-                bounds.MinX,
-                bounds.MinY
-            )
-
-        data.Box.Size =
-            UDim2.fromOffset(
-                math.max(
-                    bounds.Width,
-                    2
-                ),
-                math.max(
-                    bounds.Height,
-                    2
-                )
-            )
-
-    else
-
-        data.Box.Visible = false
-
-    end
-
-    --==================================================
-    -- NAME
-    --==================================================
-
-    if Config.Names then
-
-        data.Name.Visible = true
-
-        data.Name.Position =
-            UDim2.fromOffset(
-                (
-                    bounds.MinX +
-                    bounds.MaxX
-                ) / 2,
-                bounds.MinY - 3
-            )
-
-        data.Name.Text =
-            player.DisplayName
-
-    else
-
-        data.Name.Visible = false
-
-    end
-
-    --==================================================
-    -- HEALTH
-    --==================================================
-
-    if Config.Health then
-
-        data.Health.Visible = true
-
-        data.Health.Position =
-            UDim2.fromOffset(
-                (
-                    bounds.MinX +
-                    bounds.MaxX
-                ) / 2,
-                bounds.MaxY + 2
-            )
-
-        data.Health.Text =
-            "HP: " ..
-            math.floor(
-                humanoid.Health
-            ) ..
-            " / " ..
-            math.floor(
-                humanoid.MaxHealth
-            )
-
-    else
-
-        data.Health.Visible = false
-
-    end
-
-    --==================================================
-    -- DISTANCE
-    --==================================================
-
-    if Config.Distance then
-
-        local root =
-            character:FindFirstChild(
-                "HumanoidRootPart"
-            )
-
-        local localRoot =
-            LocalPlayer.Character
-            and LocalPlayer.Character:
-                FindFirstChild(
-                    "HumanoidRootPart"
-                )
-
-        if root and localRoot then
-
-            local distance =
-                (
-                    root.Position -
-                    localRoot.Position
-                ).Magnitude
-
-            data.Distance.Visible = true
-
-            data.Distance.Position =
-                UDim2.fromOffset(
-                    (
-                        bounds.MinX +
-                        bounds.MaxX
-                    ) / 2,
-                    bounds.MaxY + 19
-                )
-
-            data.Distance.Text =
-                math.floor(
-                    distance
-                ) .. " studs"
-
-        else
-
-            data.Distance.Visible = false
+            shouldShow = false
 
         end
 
-    else
+        local humanoid
 
-        data.Distance.Visible = false
+        if character then
 
-    end
-
-    --==================================================
-    -- SNAPLINE
-    --==================================================
-
-    if Config.Snapline then
-
-        local center =
-            Vector2.new(
-                (
-                    bounds.MinX +
-                    bounds.MaxX
-                ) / 2,
-
-                (
-                    bounds.MinY +
-                    bounds.MaxY
-                ) / 2
-            )
-
-        local viewport =
-            Camera.ViewportSize
-
-        local bottom =
-            Vector2.new(
-                viewport.X / 2,
-                viewport.Y
-            )
-
-        SetLine(
-            data.Snapline,
-            bottom,
-            center
-        )
-
-    else
-
-        data.Snapline.Visible = false
-
-    end
-
-    --==================================================
-    -- CHEST ESP
-    --==================================================
-
-    if Config.ChestESP then
-
-        local chest =
-            character:FindFirstChild(
-                "UpperTorso"
-            )
-            or character:FindFirstChild(
-                "Torso"
-            )
-
-        if chest then
-
-            local position,
-                onScreen =
-                Camera:WorldToViewportPoint(
-                    chest.Position
+            humanoid =
+                character:FindFirstChildOfClass(
+                    "Humanoid"
                 )
 
-            if onScreen
-                and position.Z > 0 then
+        end
 
-                -- Маленькая точка,
-                -- а не огромный Highlight
-                data.BoxStroke.Color =
-                    color
+        if not humanoid or
+            humanoid.Health <= 0
+        then
+
+            shouldShow = false
+
+        end
+
+        if shouldShow then
+
+            local bounds =
+                GetCharacterBounds(
+                    character
+                )
+
+            if bounds then
+
+                --==================================================
+                -- BOX
+                --==================================================
+
+                data.Box.Visible =
+                    Config.BoxESP
+
+                if Config.BoxESP then
+
+                    data.Box.Position =
+                        UDim2.fromOffset(
+                            bounds.X,
+                            bounds.Y
+                        )
+
+                    data.Box.Size =
+                        UDim2.fromOffset(
+                            math.max(
+                                bounds.Width,
+                                2
+                            ),
+                            math.max(
+                                bounds.Height,
+                                2
+                            )
+                        )
+
+                end
+
+                --==================================================
+                -- NAME
+                --==================================================
+
+                data.Name.Visible =
+                    Config.Names
+
+                if Config.Names then
+
+                    data.Name.Position =
+                        UDim2.fromOffset(
+                            bounds.X +
+                            bounds.Width / 2,
+
+                            bounds.Y - 2
+                        )
+
+                    data.Name.Text =
+                        player.Name
+
+                end
+
+                --==================================================
+                -- HEALTH
+                --==================================================
+
+                data.Health.Visible =
+                    Config.Health
+
+                if Config.Health then
+
+                    local health =
+                        math.max(
+                            0,
+                            humanoid.Health
+                        )
+
+                    local maxHealth =
+                        math.max(
+                            1,
+                            humanoid.MaxHealth
+                        )
+
+                    data.Health.Position =
+                        UDim2.fromOffset(
+                            bounds.X +
+                            bounds.Width +
+                            5,
+
+                            bounds.Y
+                        )
+
+                    data.Health.Text =
+                        string.format(
+                            "HP: %d/%d",
+                            math.floor(
+                                health
+                            ),
+                            math.floor(
+                                maxHealth
+                            )
+                        )
+
+                end
+
+                --==================================================
+                -- DISTANCE
+                --==================================================
+
+                data.Distance.Visible =
+                    Config.Distance
+
+                if Config.Distance then
+
+                    local root =
+                        character:FindFirstChild(
+                            "HumanoidRootPart"
+                        )
+
+                    if root and
+                        LocalPlayer.Character
+                    then
+
+                        local localRoot =
+                            LocalPlayer.Character:
+                            FindFirstChild(
+                                "HumanoidRootPart"
+                            )
+
+                        if localRoot then
+
+                            local distance =
+                                (
+                                    root.Position -
+                                    localRoot.Position
+                                ).Magnitude
+
+                            data.Distance.Position =
+                                UDim2.fromOffset(
+                                    bounds.X +
+                                    bounds.Width +
+                                    5,
+
+                                    bounds.Y + 18
+                                )
+
+                            data.Distance.Text =
+                                string.format(
+                                    "%.0f studs",
+                                    distance
+                                )
+
+                        end
+
+                    end
+
+                end
+
+            else
+
+                data.Box.Visible = false
+                data.Name.Visible = false
+                data.Health.Visible = false
+                data.Distance.Visible = false
 
             end
+
+        else
+
+            data.Box.Visible = false
+            data.Name.Visible = false
+            data.Health.Visible = false
+            data.Distance.Visible = false
 
         end
 
@@ -3226,479 +3564,250 @@ end
 -- ESP LOOP
 --==================================================
 
-for _, player in
-    ipairs(Players:GetPlayers()) do
+local ESPConnection
 
-    if player ~= LocalPlayer then
-
-        CreateESPObject(player)
-
-    end
-
-end
-
-Players.PlayerAdded:Connect(
-    function(player)
-
-        if player ~= LocalPlayer then
-
-            CreateESPObject(player)
-
-        end
-
-    end
-)
-
-Players.PlayerRemoving:Connect(
-    function(player)
-
-        RemoveESPObject(player)
-
-    end
-)
-
-RunService.RenderStepped:Connect(
-    function()
-
-        Camera =
-            workspace.CurrentCamera
-
-        if not Camera then
-            return
-        end
-
-        for player, data in
-            pairs(ESPObjects) do
-
-            if player.Parent ==
-                Players then
-
-                UpdateESP(
-                    player,
-                    data
-                )
-
-            else
-
-                RemoveESPObject(
-                    player
-                )
-
-            end
-
-        end
-
-    end
-)
-
---==================================================
--- CHARACTER RESPAWN UPDATE
---==================================================
-
-for _, player in
-    ipairs(Players:GetPlayers()) do
-
-    player.CharacterAdded:Connect(
+ESPConnection =
+    RunService.RenderStepped:Connect(
         function()
 
-            task.wait(0.2)
-
-            local data =
-                ESPObjects[player]
-
-            if data then
-
-                data.Container.Visible =
-                    false
-
+            if not Camera then
+                Camera =
+                    workspace.CurrentCamera
             end
+
+            UpdateESP()
 
         end
     )
 
+--==================================================
+-- CLEANUP ESP
+--==================================================
+
+local function StopESP()
+
+    if ESPConnection then
+
+        ESPConnection:Disconnect()
+
+        ESPConnection = nil
+
+    end
+
+    for player in pairs(
+        ESPObjects
+    ) do
+
+        RemoveESP(player)
+
+    end
+
 end
 
-Players.PlayerAdded:Connect(
-    function(player)
+--==================================================
+-- VISUALS SAFETY
+--==================================================
 
-        player.CharacterAdded:Connect(
-            function()
+Config.AimFOVSize =
+    math.clamp(
+        tonumber(
+            Config.AimFOVSize
+        ) or 150,
+        25,
+        1000
+    )
 
-                task.wait(0.2)
+Config.TeamCheck =
+    Config.TeamCheck == true
 
-                local data =
-                    ESPObjects[player]
+Config.ESP =
+    Config.ESP == true
 
-                if data then
+--==================================================
+-- VISUAL STATUS
+--==================================================
 
-                    data.Container.Visible =
-                        false
+local VisualStatus =
+    New(
+        "TextLabel",
+        {
 
-                end
+            Size =
+                UDim2.new(
+                    1,
+                    -10,
+                    0,
+                    36
+                ),
+
+            BackgroundColor3 =
+                Colors.Card,
+
+            BorderSizePixel = 0,
+
+            Text =
+                "ESP: Disabled",
+
+            TextColor3 =
+                Colors.SubText,
+
+            TextSize = 10,
+
+            Font =
+                Enum.Font.Gotham,
+
+            TextXAlignment =
+                Enum.TextXAlignment.Left,
+
+            TextYAlignment =
+                Enum.TextYAlignment.Center
+
+        },
+        VisualPage
+    )
+
+New(
+    "UICorner",
+    {
+
+        CornerRadius =
+            UDim.new(
+                0,
+                6
+            )
+
+    },
+    VisualStatus
+)
+
+--==================================================
+-- VISUAL STATUS UPDATE
+--==================================================
+
+RunService.RenderStepped:Connect(
+    function()
+
+        if not VisualStatus then
+            return
+        end
+
+        if Config.ESP then
+
+            if Config.TeamCheck then
+
+                VisualStatus.Text =
+                    "ESP: Enabled • Team Check: ON"
+
+            else
+
+                VisualStatus.Text =
+                    "ESP: Enabled • Team Check: OFF"
 
             end
-        )
+
+            VisualStatus.TextColor3 =
+                Colors.Text
+
+        else
+
+            VisualStatus.Text =
+                "ESP: Disabled"
+
+            VisualStatus.TextColor3 =
+                Colors.SubText
+
+        end
 
     end
 )
 
 --==================================================
--- PART 2B END
+-- VISUAL PAGE READY
 --==================================================
 
---//==================================================
---// NEUTRALIZATION HUB
---// PART 3A / 10
---// MOVEMENT
---//==================================================
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
-local LocalPlayer = Players.LocalPlayer
+SetPage(CombatPage)
 
 --==================================================
--- MOVEMENT CONFIG
+-- PART 4 COMPLETE
 --==================================================
 
-Config.Speed = false
-Config.SpeedValue = 16
-
-Config.Jump = false
-Config.JumpPower = 50
-
-Config.Noclip = false
+print(
+    "[Lunar Hub] Part 4/6 loaded."
+)
 
 --==================================================
--- MOVEMENT PAGE
+-- LUNAR HUB v3.0
+-- PART 5/6
+-- MOVEMENT
 --==================================================
 
-CreateToggle(
+--==================================================
+-- MOVEMENT SECTION
+--==================================================
+
+CreateSection(
     MovementPage,
-    "Speed",
-    false,
-    function(value)
-
-        Config.Speed = value
-
-    end
-)
-
-CreateValue(
-    MovementPage,
-    "Speed Value",
-    Config.SpeedValue,
-    function(value)
-
-        Config.SpeedValue =
-            math.clamp(
-                value,
-                1,
-                100
-            )
-
-    end
-)
-
-CreateToggle(
-    MovementPage,
-    "Jump",
-    false,
-    function(value)
-
-        Config.Jump = value
-
-    end
-)
-
-CreateValue(
-    MovementPage,
-    "JumpPower",
-    Config.JumpPower,
-    function(value)
-
-        Config.JumpPower =
-            math.clamp(
-                value,
-                1,
-                1000
-            )
-
-    end
-)
-
-CreateToggle(
-    MovementPage,
-    "Noclip",
-    false,
-    function(value)
-
-        Config.Noclip = value
-
-    end
+    "Movement",
+    "Movement and character settings"
 )
 
 --==================================================
--- CURRENT CHARACTER
+-- CHARACTER REFERENCES
 --==================================================
 
-local CurrentCharacter = nil
-local CurrentHumanoid = nil
-local CurrentRoot = nil
-
---==================================================
--- ORIGINAL CHARACTER VALUES
---==================================================
+local Character = nil
+local Humanoid = nil
 
 local OriginalWalkSpeed = 16
 local OriginalJumpPower = 50
-
-local OriginalUseJumpPower = true
+local OriginalJumpHeight = 7.2
 
 --==================================================
--- LOAD CHARACTER
+-- UPDATE CHARACTER
 --==================================================
 
-local function SetupCharacter(character)
+local function UpdateCharacter()
 
-    CurrentCharacter = character
+    Character =
+        LocalPlayer.Character
 
-    CurrentHumanoid =
-        character:WaitForChild(
-            "Humanoid",
-            5
+    if not Character then
+
+        Humanoid = nil
+
+        return
+
+    end
+
+    Humanoid =
+        Character:FindFirstChildOfClass(
+            "Humanoid"
         )
 
-    CurrentRoot =
-        character:WaitForChild(
-            "HumanoidRootPart",
-            5
-        )
+    if Humanoid then
 
-    if not CurrentHumanoid then
-        return
-    end
+        OriginalWalkSpeed =
+            Humanoid.WalkSpeed
 
-    -- Сохраняем реальные значения
-    OriginalWalkSpeed =
-        CurrentHumanoid.WalkSpeed
+        pcall(function()
 
-    OriginalUseJumpPower =
-        CurrentHumanoid.UseJumpPower
+            OriginalJumpPower =
+                Humanoid.JumpPower
 
-    if CurrentHumanoid.UseJumpPower then
+        end)
 
-        OriginalJumpPower =
-            CurrentHumanoid.JumpPower
+        pcall(function()
 
-    else
+            OriginalJumpHeight =
+                Humanoid.JumpHeight
 
-        OriginalJumpPower =
-            CurrentHumanoid.JumpHeight
-
-    end
-
-    -- ВАЖНО:
-    -- Speed и Jump при старте выключены.
-    -- Поэтому персонаж остаётся обычным.
-
-    if not Config.Speed then
-
-        CurrentHumanoid.WalkSpeed =
-            OriginalWalkSpeed
-
-    end
-
-    if not Config.Jump then
-
-        if CurrentHumanoid.UseJumpPower then
-
-            CurrentHumanoid.JumpPower =
-                OriginalJumpPower
-
-        else
-
-            CurrentHumanoid.JumpHeight =
-                OriginalJumpPower
-
-        end
+        end)
 
     end
 
 end
 
---==================================================
--- SPEED
---==================================================
-
-local function UpdateSpeed()
-
-    local humanoid =
-        CurrentHumanoid
-
-    if not humanoid then
-        return
-    end
-
-    if humanoid.Health <= 0 then
-        return
-    end
-
-    if Config.Speed then
-
-        humanoid.WalkSpeed =
-            Config.SpeedValue
-
-    else
-
-        humanoid.WalkSpeed =
-            OriginalWalkSpeed
-
-    end
-
-end
-
---==================================================
--- JUMP
---==================================================
-
-local function UpdateJump()
-
-    local humanoid =
-        CurrentHumanoid
-
-    if not humanoid then
-        return
-    end
-
-    if humanoid.Health <= 0 then
-        return
-    end
-
-    if Config.Jump then
-
-        if humanoid.UseJumpPower then
-
-            humanoid.JumpPower =
-                Config.JumpPower
-
-        else
-
-            -- Если игра использует JumpHeight,
-            -- переводим JumpPower в разумное значение.
-            humanoid.JumpHeight =
-                math.max(
-                    1,
-                    Config.JumpPower / 7
-                )
-
-        end
-
-    else
-
-        if humanoid.UseJumpPower then
-
-            humanoid.JumpPower =
-                OriginalJumpPower
-
-        else
-
-            humanoid.JumpHeight =
-                OriginalJumpPower
-
-        end
-
-    end
-
-end
-
---==================================================
--- NOCLIP
---==================================================
-
-local function UpdateNoclip()
-
-    local character =
-        CurrentCharacter
-
-    if not character then
-        return
-    end
-
-    for _, object in
-        ipairs(
-            character:GetDescendants()
-        ) do
-
-        if object:IsA("BasePart") then
-
-            if object.Name ~=
-                "HumanoidRootPart" then
-
-                object.CanCollide =
-                    not Config.Noclip
-
-            end
-
-        end
-
-    end
-
-end
-
---==================================================
--- NOCLIP OFF
---==================================================
-
-local function RestoreCollision()
-
-    local character =
-        CurrentCharacter
-
-    if not character then
-        return
-    end
-
-    for _, object in
-        ipairs(
-            character:GetDescendants()
-        ) do
-
-        if object:IsA("BasePart") then
-
-            if object.Name ~=
-                "HumanoidRootPart" then
-
-                object.CanCollide = true
-
-            end
-
-        end
-
-    end
-
-end
-
---==================================================
--- TOGGLE CALLBACK REFRESH
---==================================================
-
-local function RefreshMovement()
-
-    UpdateSpeed()
-    UpdateJump()
-
-    if Config.Noclip then
-
-        UpdateNoclip()
-
-    else
-
-        RestoreCollision()
-
-    end
-
-end
+UpdateCharacter()
 
 --==================================================
 -- CHARACTER ADDED
@@ -3707,45 +3816,385 @@ end
 LocalPlayer.CharacterAdded:Connect(
     function(character)
 
-        -- Сбрасываем ссылки
-        CurrentCharacter = nil
-        CurrentHumanoid = nil
-        CurrentRoot = nil
+        Character = character
+
+        Humanoid =
+            character:WaitForChild(
+                "Humanoid",
+                5
+            )
+
+        if Humanoid then
+
+            OriginalWalkSpeed =
+                Humanoid.WalkSpeed
+
+            pcall(function()
+
+                OriginalJumpPower =
+                    Humanoid.JumpPower
+
+            end)
+
+            pcall(function()
+
+                OriginalJumpHeight =
+                    Humanoid.JumpHeight
+
+            end)
+
+        end
 
         task.wait(0.15)
 
-        SetupCharacter(
-            character
-        )
+        if Humanoid then
 
-        -- Применяем только реально
-        -- включённые функции.
-        if Config.Speed then
-            UpdateSpeed()
-        end
+            if Config.Speed then
 
-        if Config.Jump then
-            UpdateJump()
-        end
+                Humanoid.WalkSpeed =
+                    Config.SpeedValue
 
-        if Config.Noclip then
-            UpdateNoclip()
+            end
+
+            if Config.Jump then
+
+                pcall(function()
+
+                    Humanoid.UseJumpPower =
+                        true
+
+                    Humanoid.JumpPower =
+                        Config.JumpPower
+
+                end)
+
+            end
+
         end
 
     end
 )
 
 --==================================================
--- INITIAL CHARACTER
+-- SPEED
 --==================================================
 
-if LocalPlayer.Character then
+CreateToggle(
+    MovementPage,
+    "Speed",
+    Config.Speed,
+    function(value)
 
-    SetupCharacter(
-        LocalPlayer.Character
+        Config.Speed =
+            value
+
+        if not Humanoid then
+            UpdateCharacter()
+        end
+
+        if not Humanoid then
+            return
+        end
+
+        if value then
+
+            Humanoid.WalkSpeed =
+                Config.SpeedValue
+
+        else
+
+            Humanoid.WalkSpeed =
+                OriginalWalkSpeed
+
+        end
+
+    end
+)
+
+--==================================================
+-- SPEED VALUE
+--==================================================
+
+CreateValue(
+    MovementPage,
+    "Speed Value",
+    Config.SpeedValue,
+    function(value)
+
+        value =
+            math.clamp(
+                math.floor(value),
+                1,
+                500
+            )
+
+        Config.SpeedValue =
+            value
+
+        if Config.Speed and
+            Humanoid
+        then
+
+            Humanoid.WalkSpeed =
+                value
+
+        end
+
+    end
+)
+
+--==================================================
+-- JUMP
+--==================================================
+
+CreateToggle(
+    MovementPage,
+    "Jump",
+    Config.Jump,
+    function(value)
+
+        Config.Jump =
+            value
+
+        if not Humanoid then
+            UpdateCharacter()
+        end
+
+        if not Humanoid then
+            return
+        end
+
+        if value then
+
+            pcall(function()
+
+                Humanoid.UseJumpPower =
+                    true
+
+                Humanoid.JumpPower =
+                    Config.JumpPower
+
+            end)
+
+        else
+
+            pcall(function()
+
+                Humanoid.UseJumpPower =
+                    true
+
+                Humanoid.JumpPower =
+                    OriginalJumpPower
+
+            end)
+
+            pcall(function()
+
+                Humanoid.JumpHeight =
+                    OriginalJumpHeight
+
+            end)
+
+        end
+
+    end
+)
+
+--==================================================
+-- JUMP POWER
+--==================================================
+
+CreateValue(
+    MovementPage,
+    "Jump Power",
+    Config.JumpPower,
+    function(value)
+
+        value =
+            math.clamp(
+                math.floor(value),
+                1,
+                500
+            )
+
+        Config.JumpPower =
+            value
+
+        if Config.Jump and
+            Humanoid
+        then
+
+            pcall(function()
+
+                Humanoid.UseJumpPower =
+                    true
+
+                Humanoid.JumpPower =
+                    value
+
+            end)
+
+        end
+
+    end
+)
+
+--==================================================
+-- NOCLIP
+--==================================================
+
+CreateToggle(
+    MovementPage,
+    "Noclip",
+    Config.Noclip,
+    function(value)
+
+        Config.Noclip =
+            value
+
+    end
+)
+
+--==================================================
+-- NOCLIP LOOP
+--==================================================
+
+local NoclipConnection
+
+NoclipConnection =
+    RunService.Stepped:Connect(
+        function()
+
+            if not Config.Noclip then
+                return
+            end
+
+            local character =
+                LocalPlayer.Character
+
+            if not character then
+                return
+            end
+
+            for _, object in ipairs(
+                character:GetDescendants()
+            ) do
+
+                if object:IsA("BasePart") then
+
+                    object.CanCollide = false
+
+                end
+
+            end
+
+        end
     )
 
+--==================================================
+-- RESTORE COLLISION
+--==================================================
+
+local function RestoreCollision()
+
+    local character =
+        LocalPlayer.Character
+
+    if not character then
+        return
+    end
+
+    for _, object in ipairs(
+        character:GetDescendants()
+    ) do
+
+        if object:IsA("BasePart") then
+
+            object.CanCollide = true
+
+        end
+
+    end
+
 end
+
+--==================================================
+-- CAMERA FOV SECTION
+--==================================================
+
+CreateSection(
+    MovementPage,
+    "Camera",
+    "Camera field of view settings"
+)
+
+--==================================================
+-- FOV CHANGER
+--==================================================
+
+CreateToggle(
+    MovementPage,
+    "FOV Changer",
+    Config.FOVChanger,
+    function(value)
+
+        Config.FOVChanger =
+            value
+
+        if not Camera then
+            Camera =
+                workspace.CurrentCamera
+        end
+
+        if not Camera then
+            return
+        end
+
+        if value then
+
+            Camera.FieldOfView =
+                Config.GameFOV
+
+        else
+
+            Camera.FieldOfView = 70
+
+        end
+
+    end
+)
+
+--==================================================
+-- GAME FOV
+--==================================================
+
+CreateValue(
+    MovementPage,
+    "Game FOV",
+    Config.GameFOV,
+    function(value)
+
+        value =
+            math.clamp(
+                math.floor(value),
+                40,
+                120
+            )
+
+        Config.GameFOV =
+            value
+
+        if Config.FOVChanger and
+            Camera
+        then
+
+            Camera.FieldOfView =
+                value
+
+        end
+
+    end
+)
 
 --==================================================
 -- MOVEMENT LOOP
@@ -3754,86 +4203,86 @@ end
 local MovementConnection
 
 MovementConnection =
-    RunService.Heartbeat:Connect(
+    RunService.RenderStepped:Connect(
         function()
 
-            if not CurrentCharacter
-                or not CurrentCharacter.Parent then
+            if not Humanoid then
 
-                return
+                Character =
+                    LocalPlayer.Character
 
-            end
+                if Character then
 
-            if not CurrentHumanoid then
-                return
-            end
-
-            if CurrentHumanoid.Health <= 0 then
-                return
-            end
-
-            -- SPEED
-            if Config.Speed then
-
-                if
-                    math.abs(
-                        CurrentHumanoid.WalkSpeed
-                        - Config.SpeedValue
-                    ) > 0.01
-                then
-
-                    CurrentHumanoid.WalkSpeed =
-                        Config.SpeedValue
-
-                end
-
-            end
-
-            -- JUMP
-            if Config.Jump then
-
-                if CurrentHumanoid.UseJumpPower then
-
-                    if
-                        math.abs(
-                            CurrentHumanoid.JumpPower
-                            - Config.JumpPower
-                        ) > 0.01
-                    then
-
-                        CurrentHumanoid.JumpPower =
-                            Config.JumpPower
-
-                    end
-
-                else
-
-                    local targetHeight =
-                        math.max(
-                            1,
-                            Config.JumpPower / 7
+                    Humanoid =
+                        Character:
+                        FindFirstChildOfClass(
+                            "Humanoid"
                         )
 
-                    if
-                        math.abs(
-                            CurrentHumanoid.JumpHeight
-                            - targetHeight
-                        ) > 0.01
+                end
+
+            end
+
+            if Humanoid then
+
+                -- SPEED
+                if Config.Speed then
+
+                    if Humanoid.WalkSpeed ~=
+                        Config.SpeedValue
                     then
 
-                        CurrentHumanoid.JumpHeight =
-                            targetHeight
+                        Humanoid.WalkSpeed =
+                            Config.SpeedValue
 
                     end
 
                 end
 
+                -- JUMP
+                if Config.Jump then
+
+                    pcall(function()
+
+                        if Humanoid.JumpPower ~=
+                            Config.JumpPower
+                        then
+
+                            Humanoid.UseJumpPower =
+                                true
+
+                            Humanoid.JumpPower =
+                                Config.JumpPower
+
+                        end
+
+                    end)
+
+                end
+
             end
 
-            -- NOCLIP
-            if Config.Noclip then
+            -- CAMERA FOV
+            if Config.FOVChanger then
 
-                UpdateNoclip()
+                if not Camera then
+                    Camera =
+                        workspace.CurrentCamera
+                end
+
+                if Camera then
+
+                    if math.abs(
+                        Camera.FieldOfView -
+                        Config.GameFOV
+                    ) > 0.1 then
+
+                        Camera.FieldOfView =
+                            Config.GameFOV
+
+                    end
+
+                end
 
             end
 
@@ -3841,1185 +4290,822 @@ MovementConnection =
     )
 
 --==================================================
--- EXTRA TOGGLE MONITOR
+-- MOVEMENT STATUS
 --==================================================
 
-task.spawn(
-    function()
+local MovementStatus =
+    New(
+        "TextLabel",
+        {
 
-        local lastSpeed =
-            Config.Speed
+            Size =
+                UDim2.new(
+                    1,
+                    -10,
+                    0,
+                    36
+                ),
 
-        local lastJump =
-            Config.Jump
+            BackgroundColor3 =
+                Colors.Card,
 
-        local lastNoclip =
-            Config.Noclip
+            BorderSizePixel = 0,
 
-        while Gui
-            and Gui.Parent do
+            Text =
+                "Movement: Ready",
 
-            task.wait(0.1)
+            TextColor3 =
+                Colors.SubText,
 
-            -- SPEED CHANGED
-            if lastSpeed ~=
-                Config.Speed then
+            TextSize = 10,
 
-                lastSpeed =
-                    Config.Speed
+            Font =
+                Enum.Font.Gotham,
 
-                UpdateSpeed()
+            TextXAlignment =
+                Enum.TextXAlignment.Left,
 
-            end
+            TextYAlignment =
+                Enum.TextYAlignment.Center
 
-            -- JUMP CHANGED
-            if lastJump ~=
-                Config.Jump then
+        },
+        MovementPage
+    )
 
-                lastJump =
-                    Config.Jump
+New(
+    "UICorner",
+    {
 
-                UpdateJump()
-
-            end
-
-            -- NOCLIP CHANGED
-            if lastNoclip ~=
-                Config.Noclip then
-
-                lastNoclip =
-                    Config.Noclip
-
-                if Config.Noclip then
-
-                    UpdateNoclip()
-
-                else
-
-                    RestoreCollision()
-
-                end
-
-            end
-
-        end
-
-    end
-)
-
---==================================================
--- VALUE CHANGE MONITOR
---==================================================
-
-task.spawn(
-    function()
-
-        local lastSpeedValue =
-            Config.SpeedValue
-
-        local lastJumpPower =
-            Config.JumpPower
-
-        while Gui
-            and Gui.Parent do
-
-            task.wait(0.1)
-
-            if lastSpeedValue ~=
-                Config.SpeedValue then
-
-                lastSpeedValue =
-                    Config.SpeedValue
-
-                if Config.Speed then
-                    UpdateSpeed()
-                end
-
-            end
-
-            if lastJumpPower ~=
-                Config.JumpPower then
-
-                lastJumpPower =
-                    Config.JumpPower
-
-                if Config.Jump then
-                    UpdateJump()
-                end
-
-            end
-
-        end
-
-    end
-)
-
---==================================================
--- CLEANUP
---==================================================
-
-Gui.Destroying:Connect(
-    function()
-
-        Config.Speed = false
-        Config.Jump = false
-        Config.Noclip = false
-
-        if CurrentHumanoid then
-
-            CurrentHumanoid.WalkSpeed =
-                OriginalWalkSpeed
-
-            if CurrentHumanoid.UseJumpPower then
-
-                CurrentHumanoid.JumpPower =
-                    OriginalJumpPower
-
-            else
-
-                CurrentHumanoid.JumpHeight =
-                    OriginalJumpPower
-
-            end
-
-        end
-
-        RestoreCollision()
-
-        if MovementConnection then
-
-            MovementConnection:Disconnect()
-
-        end
-
-    end
-)
-
---==================================================
--- PART 3A END
---==================================================
-
---//==================================================
---// NEUTRALIZATION HUB
---// PART 3B / 10
---// FOV CHANGER + CAMERA
---//==================================================
-
-local RunService = game:GetService("RunService")
-
-local Camera = workspace.CurrentCamera
-
---==================================================
--- FOV CONFIG
---==================================================
-
-Config.FOVChanger = false
-Config.GameFOV = 70
-
-local OriginalGameFOV = 70
-
---==================================================
--- SAVE ORIGINAL FOV
---==================================================
-
-if Camera then
-
-    OriginalGameFOV =
-        Camera.FieldOfView
-
-    Config.GameFOV =
-        OriginalGameFOV
-
-end
-
---==================================================
--- FOV CONTROLS
---==================================================
-
-CreateToggle(
-    MovementPage,
-    "FOV Changer",
-    false,
-    function(value)
-
-        Config.FOVChanger =
-            value
-
-        if not value then
-
-            local currentCamera =
-                workspace.CurrentCamera
-
-            if currentCamera then
-
-                currentCamera.FieldOfView =
-                    OriginalGameFOV
-
-            end
-
-        end
-
-    end
-)
-
-CreateValue(
-    MovementPage,
-    "Game FOV",
-    Config.GameFOV,
-    function(value)
-
-        Config.GameFOV =
-            math.clamp(
-                value,
-                40,
-                120
+        CornerRadius =
+            UDim.new(
+                0,
+                6
             )
+
+    },
+    MovementStatus
+)
+
+--==================================================
+-- MOVEMENT STATUS UPDATE
+--==================================================
+
+RunService.RenderStepped:Connect(
+    function()
+
+        if not MovementStatus then
+            return
+        end
+
+        local status = {}
+
+        if Config.Speed then
+
+            table.insert(
+                status,
+                "Speed"
+            )
+
+        end
+
+        if Config.Jump then
+
+            table.insert(
+                status,
+                "Jump"
+            )
+
+        end
+
+        if Config.Noclip then
+
+            table.insert(
+                status,
+                "Noclip"
+            )
+
+        end
 
         if Config.FOVChanger then
 
-            local currentCamera =
-                workspace.CurrentCamera
+            table.insert(
+                status,
+                "FOV"
+            )
 
-            if currentCamera then
+        end
 
-                currentCamera.FieldOfView =
-                    Config.GameFOV
+        if #status == 0 then
 
-            end
+            MovementStatus.Text =
+                "Movement: No features enabled"
+
+            MovementStatus.TextColor3 =
+                Colors.SubText
+
+        else
+
+            MovementStatus.Text =
+                "Active: " ..
+                table.concat(
+                    status,
+                    " • "
+                )
+
+            MovementStatus.TextColor3 =
+                Colors.Text
 
         end
 
     end
 )
+
+--==================================================
+-- DISABLE ALL MOVEMENT
+--==================================================
+
+local function DisableMovement()
+
+    Config.Speed = false
+    Config.Jump = false
+    Config.Noclip = false
+    Config.FOVChanger = false
+
+    if Humanoid then
+
+        Humanoid.WalkSpeed =
+            OriginalWalkSpeed
+
+        pcall(function()
+
+            Humanoid.UseJumpPower =
+                true
+
+            Humanoid.JumpPower =
+                OriginalJumpPower
+
+        end)
+
+        pcall(function()
+
+            Humanoid.JumpHeight =
+                OriginalJumpHeight
+
+        end)
+
+    end
+
+    RestoreCollision()
+
+    if Camera then
+
+        Camera.FieldOfView = 70
+
+    end
+
+end
 
 --==================================================
 -- CAMERA UPDATE
 --==================================================
 
-local FOVConnection
-
-FOVConnection =
-    RunService.RenderStepped:Connect(
-        function()
-
-            local currentCamera =
-                workspace.CurrentCamera
-
-            if not currentCamera then
-                return
-            end
-
-            Camera =
-                currentCamera
-
-            if Config.FOVChanger then
-
-                if math.abs(
-                    currentCamera.FieldOfView
-                    - Config.GameFOV
-                ) > 0.01 then
-
-                    currentCamera.FieldOfView =
-                        Config.GameFOV
-
-                end
-
-            end
-
-        end
-    )
-
---==================================================
--- CAMERA RESPAWN SAFETY
---==================================================
-
-LocalPlayer.CharacterAdded:Connect(
+workspace:GetPropertyChangedSignal(
+    "CurrentCamera"
+):Connect(
     function()
-
-        task.wait(0.25)
 
         Camera =
             workspace.CurrentCamera
 
-        if not Camera then
-            return
-        end
-
-        if Config.FOVChanger then
+        if Config.FOVChanger and
+            Camera
+        then
 
             Camera.FieldOfView =
                 Config.GameFOV
 
-        else
-
-            Camera.FieldOfView =
-                OriginalGameFOV
-
         end
 
     end
 )
 
 --==================================================
--- CAMERA RESET
+-- PART 5 COMPLETE
 --==================================================
 
-Gui.Destroying:Connect(
-    function()
-
-        local currentCamera =
-            workspace.CurrentCamera
-
-        if currentCamera then
-
-            currentCamera.FieldOfView =
-                OriginalGameFOV
-
-        end
-
-        if FOVConnection then
-
-            FOVConnection:Disconnect()
-
-        end
-
-    end
+print(
+    "[Lunar Hub] Part 5/6 loaded."
 )
 
 --==================================================
--- PART 3B END
+-- LUNAR HUB v3.0
+-- PART 6/6
+-- MISC + SETTINGS + FINAL
 --==================================================
 
 --==================================================
--- PART 4A — SETTINGS + TELEGRAM
+-- MISC PAGE
 --==================================================
 
-local TelegramURL = "https://t.me/lunarhub_script"
+CreateSection(
+    MiscPage,
+    "Misc",
+    "Additional information"
+)
+
+local MiscInfo =
+    New(
+        "TextLabel",
+        {
+
+            Size =
+                UDim2.new(
+                    1,
+                    -10,
+                    0,
+                    70
+                ),
+
+            BackgroundColor3 =
+                Colors.Card,
+
+            BorderSizePixel = 0,
+
+            Text =
+                "LUNAR HUB\n\n"
+                .. "Universal utility hub",
+
+            TextColor3 =
+                Colors.Text,
+
+            TextSize = 11,
+
+            Font =
+                Enum.Font.Gotham,
+
+            TextXAlignment =
+                Enum.TextXAlignment.Left,
+
+            TextYAlignment =
+                Enum.TextYAlignment.Center,
+
+            TextWrapped = true
+
+        },
+        MiscPage
+    )
+
+New(
+    "UICorner",
+    {
+
+        CornerRadius =
+            UDim.new(
+                0,
+                7
+            )
+
+    },
+    MiscInfo
+)
 
 --==================================================
--- CLEAR OLD SETTINGS CONTENT
+-- SETTINGS PAGE
 --==================================================
 
-for _, child in ipairs(SettingsPage:GetChildren()) do
-    if not child:IsA("UIListLayout")
-    and not child:IsA("UIPadding") then
-        child:Destroy()
-    end
-end
-
---==================================================
--- SETTINGS HEADER
---==================================================
-
-local SettingsHeader = New("Frame", {
-    Size = UDim2.new(1, -8, 0, 70),
-    BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-    BorderSizePixel = 0
-}, SettingsPage)
-
-New("UICorner", {
-    CornerRadius = UDim.new(0, 6)
-}, SettingsHeader)
-
-New("TextLabel", {
-    Size = UDim2.new(1, -24, 0, 30),
-    Position = UDim2.fromOffset(12, 7),
-    BackgroundTransparency = 1,
-    Text = "NEUTRALIZATION HUB",
-    TextColor3 = Colors.Text,
-    TextSize = 16,
-    Font = Enum.Font.GothamBold,
-    TextXAlignment = Enum.TextXAlignment.Left
-}, SettingsHeader)
-
-New("TextLabel", {
-    Size = UDim2.new(1, -24, 0, 25),
-    Position = UDim2.fromOffset(12, 38),
-    BackgroundTransparency = 1,
-    Text = "Settings & official links",
-    TextColor3 = Colors.SubText,
-    TextSize = 12,
-    Font = Enum.Font.Gotham,
-    TextXAlignment = Enum.TextXAlignment.Left
-}, SettingsHeader)
-
---==================================================
--- TELEGRAM
---==================================================
-
-local TelegramFrame = New("Frame", {
-    Size = UDim2.new(1, -8, 0, 82),
-    BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-    BorderSizePixel = 0
-}, SettingsPage)
-
-New("UICorner", {
-    CornerRadius = UDim.new(0, 6)
-}, TelegramFrame)
-
-New("TextLabel", {
-    Size = UDim2.new(1, -120, 0, 25),
-    Position = UDim2.fromOffset(12, 7),
-    BackgroundTransparency = 1,
-    Text = "Telegram",
-    TextColor3 = Colors.Text,
-    TextSize = 14,
-    Font = Enum.Font.GothamSemibold,
-    TextXAlignment = Enum.TextXAlignment.Left
-}, TelegramFrame)
-
-local TelegramText = New("TextLabel", {
-    Size = UDim2.new(1, -125, 0, 25),
-    Position = UDim2.fromOffset(12, 34),
-    BackgroundTransparency = 1,
-    Text = "@lunarhub_script",
-    TextColor3 = Colors.SubText,
-    TextSize = 12,
-    Font = Enum.Font.Gotham,
-    TextXAlignment = Enum.TextXAlignment.Left
-}, TelegramFrame)
-
-local TelegramButton = New("TextButton", {
-    Size = UDim2.fromOffset(88, 34),
-    Position = UDim2.new(1, -100, 0.5, -17),
-    BackgroundColor3 = Colors.Menu,
-    Text = "COPY",
-    TextColor3 = Colors.Text,
-    TextSize = 11,
-    Font = Enum.Font.GothamBold,
-    AutoButtonColor = false
-}, TelegramFrame)
-
-New("UICorner", {
-    CornerRadius = UDim.new(0, 6)
-}, TelegramButton)
-
-TelegramButton.MouseEnter:Connect(function()
-    Tween(TelegramButton, {
-        BackgroundColor3 = Color3.fromRGB(195, 30, 30)
-    }, 0.15):Play()
-end)
-
-TelegramButton.MouseLeave:Connect(function()
-    Tween(TelegramButton, {
-        BackgroundColor3 = Colors.Menu
-    }, 0.15):Play()
-end)
-
-TelegramButton.MouseButton1Click:Connect(function()
-    local copied = false
-
-    pcall(function()
-        if setclipboard then
-            setclipboard(TelegramURL)
-            copied = true
-        end
-    end)
-
-    if copied then
-        TelegramButton.Text = "COPIED!"
-
-        task.delay(1.2, function()
-            if TelegramButton and TelegramButton.Parent then
-                TelegramButton.Text = "COPY"
-            end
-        end)
-    else
-        TelegramText.Text = TelegramURL
-        TelegramButton.Text = "LINK"
-
-        task.delay(2, function()
-            if TelegramButton and TelegramButton.Parent then
-                TelegramButton.Text = "COPY"
-            end
-
-            if TelegramText and TelegramText.Parent then
-                TelegramText.Text = "@lunarhub_script"
-            end
-        end)
-    end
-end)
+CreateSection(
+    SettingsPage,
+    "Lunar Hub",
+    "Information and links"
+)
 
 --==================================================
 -- VERSION
 --==================================================
 
-local VersionFrame = New("Frame", {
-    Size = UDim2.new(1, -8, 0, 50),
-    BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-    BorderSizePixel = 0
-}, SettingsPage)
+local VersionCard =
+    New(
+        "TextLabel",
+        {
 
-New("UICorner", {
-    CornerRadius = UDim.new(0, 6)
-}, VersionFrame)
+            Size =
+                UDim2.new(
+                    1,
+                    -10,
+                    0,
+                    48
+                ),
 
-New("TextLabel", {
-    Size = UDim2.new(1, -24, 1, 0),
-    Position = UDim2.fromOffset(12, 0),
-    BackgroundTransparency = 1,
-    Text = "Neutralization Hub  •  v1.0",
-    TextColor3 = Colors.SubText,
-    TextSize = 12,
-    Font = Enum.Font.Gotham,
-    TextXAlignment = Enum.TextXAlignment.Left
-}, VersionFrame)
+            BackgroundColor3 =
+                Colors.Card,
 
-print("[Neutralization Hub] Part 4A loaded.")
+            BorderSizePixel = 0,
 
---==================================================
--- PART 4B — SETTINGS / THEME
---==================================================
+            Text =
+                "Version: v3.0",
 
---==================================================
--- THEME INFO
---==================================================
+            TextColor3 =
+                Colors.Text,
 
-local ThemeFrame = New("Frame", {
-    Size = UDim2.new(1, -8, 0, 70),
-    BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-    BorderSizePixel = 0
-}, SettingsPage)
+            TextSize = 11,
 
-New("UICorner", {
-    CornerRadius = UDim.new(0, 6)
-}, ThemeFrame)
+            Font =
+                Enum.Font.GothamSemibold,
 
-New("TextLabel", {
-    Size = UDim2.new(1, -24, 0, 26),
-    Position = UDim2.fromOffset(12, 7),
-    BackgroundTransparency = 1,
-    Text = "Interface",
-    TextColor3 = Colors.Text,
-    TextSize = 14,
-    Font = Enum.Font.GothamSemibold,
-    TextXAlignment = Enum.TextXAlignment.Left
-}, ThemeFrame)
+            TextXAlignment =
+                Enum.TextXAlignment.Left,
 
-New("TextLabel", {
-    Size = UDim2.new(1, -24, 0, 25),
-    Position = UDim2.fromOffset(12, 34),
-    BackgroundTransparency = 1,
-    Text = "Animations remain enabled for the interface.",
-    TextColor3 = Colors.SubText,
-    TextSize = 11,
-    Font = Enum.Font.Gotham,
-    TextXAlignment = Enum.TextXAlignment.Left
-}, ThemeFrame)
+            TextYAlignment =
+                Enum.TextYAlignment.Center
 
---==================================================
--- CLEAN OLD MISC CONTROLS
---==================================================
-
--- The new version does not expose:
--- Fullbright
--- Menu Animations
--- Music
-
--- UI animations themselves remain active.
-
---==================================================
--- SETTINGS STATUS
---==================================================
-
-local StatusFrame = New("Frame", {
-    Size = UDim2.new(1, -8, 0, 55),
-    BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-    BorderSizePixel = 0
-}, SettingsPage)
-
-New("UICorner", {
-    CornerRadius = UDim.new(0, 6)
-}, StatusFrame)
-
-local StatusLabel = New("TextLabel", {
-    Size = UDim2.new(1, -24, 1, 0),
-    Position = UDim2.fromOffset(12, 0),
-    BackgroundTransparency = 1,
-    Text = "Status: Ready",
-    TextColor3 = Colors.SubText,
-    TextSize = 12,
-    Font = Enum.Font.Gotham,
-    TextXAlignment = Enum.TextXAlignment.Left
-}, StatusFrame)
-
---==================================================
--- SETTINGS STATUS HELPER
---==================================================
-
-local function SetSettingsStatus(text)
-    if StatusLabel and StatusLabel.Parent then
-        StatusLabel.Text = "Status: " .. tostring(text)
-
-        Tween(StatusLabel, {
-            TextTransparency = 0
-        }, 0.15):Play()
-    end
-end
-
---==================================================
--- TELEGRAM STATUS HOOK
---==================================================
-
-if TelegramButton then
-    TelegramButton.MouseButton1Click:Connect(function()
-        SetSettingsStatus("Telegram link copied")
-    end)
-end
-
---==================================================
--- VERSION / BUILD INFO
---==================================================
-
-local BuildFrame = New("Frame", {
-    Size = UDim2.new(1, -8, 0, 55),
-    BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-    BorderSizePixel = 0
-}, SettingsPage)
-
-New("UICorner", {
-    CornerRadius = UDim.new(0, 6)
-}, BuildFrame)
-
-New("TextLabel", {
-    Size = UDim2.new(1, -24, 1, 0),
-    Position = UDim2.fromOffset(12, 0),
-    BackgroundTransparency = 1,
-    Text = "Build: Lunar Hub / Neutralization Hub",
-    TextColor3 = Colors.SubText,
-    TextSize = 12,
-    Font = Enum.Font.Gotham,
-    TextXAlignment = Enum.TextXAlignment.Left
-}, BuildFrame)
-
---==================================================
--- FINAL SETTINGS MESSAGE
---==================================================
-
-SetSettingsStatus("Ready")
-
-print("[Neutralization Hub] Part 4B loaded.")
-
---==================================================
--- PART 5 — FINALIZATION / UPDATE LOOP / CLEANUP
---==================================================
-
---==================================================
--- FINAL CONFIG DEFAULTS
---==================================================
-
-Config.AimAssist = Config.AimAssist or false
-Config.VisibleOnly = Config.VisibleOnly ~= false
-
-Config.AimFOV = Config.AimFOV ~= false
-Config.AimFOVSize = Config.AimFOVSize or 150
-Config.AimSmoothness = Config.AimSmoothness or 0.18
-
-Config.TargetPart = Config.TargetPart or "Head"
-
-Config.ESP = Config.ESP or false
-Config.TeamCheck = Config.TeamCheck ~= false
-
-Config.BoxESP = Config.BoxESP or false
-Config.Names = Config.Names or false
-Config.Health = Config.Health or false
-Config.Distance = Config.Distance or false
-Config.Snapline = Config.Snapline or false
-Config.ChestESP = Config.ChestESP or false
-
-Config.Speed = Config.Speed or false
-Config.SpeedValue = Config.SpeedValue or 16
-
-Config.Jump = Config.Jump or false
-Config.JumpPower = Config.JumpPower or 50
-
-Config.Noclip = Config.Noclip or false
-
-Config.FOVChanger = Config.FOVChanger or false
-
---==================================================
--- CHARACTER STATE
---==================================================
-
-local CharacterConnection
-local HumanoidConnection
-
-local OriginalWalkSpeed = 16
-local OriginalJumpPower = 50
-local OriginalJumpHeight = 7.2
-local OriginalUseJumpPower = true
-
-local function CaptureCharacterValues(character)
-    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-
-    if not humanoid then
-        return
-    end
-
-    OriginalWalkSpeed = humanoid.WalkSpeed
-    OriginalUseJumpPower = humanoid.UseJumpPower
-
-    if humanoid.UseJumpPower then
-        OriginalJumpPower = humanoid.JumpPower
-    else
-        OriginalJumpHeight = humanoid.JumpHeight
-    end
-end
-
---==================================================
--- CHARACTER SETUP
---==================================================
-
-local function SetupCharacter(character)
-    if not character then
-        return
-    end
-
-    local humanoid = character:WaitForChild("Humanoid", 5)
-
-    if not humanoid then
-        return
-    end
-
-    CaptureCharacterValues(character)
-
-    task.wait(0.1)
-
-    if Config.Speed then
-        humanoid.WalkSpeed = Config.SpeedValue
-    end
-
-    if Config.Jump then
-        if humanoid.UseJumpPower then
-            humanoid.JumpPower = Config.JumpPower
-        else
-            humanoid.JumpHeight = Config.JumpPower
-        end
-    end
-end
-
---==================================================
--- RESPAWN HANDLER
---==================================================
-
-if LocalPlayer.Character then
-    task.spawn(function()
-        SetupCharacter(LocalPlayer.Character)
-    end)
-end
-
-CharacterConnection = LocalPlayer.CharacterAdded:Connect(function(character)
-
-    task.spawn(function()
-        SetupCharacter(character)
-    end)
-
-end)
-
---==================================================
--- MOVEMENT UPDATE
---==================================================
-
-local function UpdateMovement()
-
-    local character = LocalPlayer.Character
-
-    if not character then
-        return
-    end
-
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-
-    if not humanoid then
-        return
-    end
-
-    -- SPEED
-    if Config.Speed then
-
-        humanoid.WalkSpeed = Config.SpeedValue
-
-    else
-
-        humanoid.WalkSpeed = OriginalWalkSpeed
-
-    end
-
-    -- JUMP
-    if Config.Jump then
-
-        if humanoid.UseJumpPower then
-            humanoid.JumpPower = Config.JumpPower
-        else
-            humanoid.JumpHeight = Config.JumpPower
-        end
-
-    else
-
-        if OriginalUseJumpPower then
-            humanoid.JumpPower = OriginalJumpPower
-        else
-            humanoid.JumpHeight = OriginalJumpHeight
-        end
-
-    end
-
-end
-
---==================================================
--- NOCLIP
---==================================================
-
-local function UpdateNoclip()
-
-    local character = LocalPlayer.Character
-
-    if not character then
-        return
-    end
-
-    for _, object in ipairs(character:GetDescendants()) do
-
-        if object:IsA("BasePart") then
-
-            if Config.Noclip then
-                object.CanCollide = false
-            else
-                object.CanCollide = true
-            end
-
-        end
-
-    end
-
-end
-
---==================================================
--- GAME FOV
---==================================================
-
-local OriginalGameFOV = 70
-
-do
-
-    local camera = workspace.CurrentCamera
-
-    if camera then
-        OriginalGameFOV = camera.FieldOfView
-        Config.GameFOV = Config.GameFOV or OriginalGameFOV
-    end
-
-end
-
-local function UpdateGameFOV()
-
-    local camera = workspace.CurrentCamera
-
-    if not camera then
-        return
-    end
-
-    if Config.FOVChanger then
-
-        camera.FieldOfView = math.clamp(
-            tonumber(Config.GameFOV) or OriginalGameFOV,
-            40,
-            120
-        )
-
-    else
-
-        camera.FieldOfView = OriginalGameFOV
-
-    end
-
-end
-
---==================================================
--- AIM FOV VISUAL
---==================================================
-
-local function UpdateAimFOV()
-
-    if not FOVCircle then
-        return
-    end
-
-    local size = tonumber(Config.AimFOVSize) or 150
-
-    size = math.clamp(size, 20, 1000)
-
-    FOVCircle.Size = UDim2.fromOffset(
-        size * 2,
-        size * 2
+        },
+        SettingsPage
     )
 
-    FOVCircle.Visible = Config.AimFOV
+New(
+    "UICorner",
+    {
 
-    if FOVStroke then
-        FOVStroke.Color = Colors.Menu
-    end
+        CornerRadius =
+            UDim.new(
+                0,
+                7
+            )
 
-end
-
---==================================================
--- OLD FOV COMPATIBILITY
---==================================================
-
-Config.FOV = Config.AimFOVSize
-
---==================================================
--- SAFETY: DISABLE OLD FEATURES
---==================================================
-
-Config.Fullbright = false
-Config.MenuAnimations = true
-
--- These values are intentionally not exposed
--- as toggles in the new interface.
+    },
+    VersionCard
+)
 
 --==================================================
--- MAIN UPDATE LOOP
+-- CREATOR
 --==================================================
 
-local MainConnection
-
-MainConnection = RunService.RenderStepped:Connect(function()
-
-    if not Gui or not Gui.Parent then
-        return
-    end
-
-    -- Movement
-    UpdateMovement()
-
-    -- Noclip
-    UpdateNoclip()
-
-    -- Game FOV
-    UpdateGameFOV()
-
-    -- Aim FOV
-    UpdateAimFOV()
-
-end)
-
---==================================================
--- REMOVE UNUSED MISC CONTENT
---==================================================
-
-for _, object in ipairs(MiscPage:GetChildren()) do
-
-    if object:IsA("Frame")
-    or object:IsA("TextButton")
-    or object:IsA("TextLabel") then
-
-        object:Destroy()
-
-    end
-
-end
-
--- Keep Misc page available but empty.
--- UI animations are handled internally.
-
-local MiscEmpty = New("Frame", {
-    Size = UDim2.new(1, -8, 0, 60),
-    BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-    BorderSizePixel = 0
-}, MiscPage)
-
-New("UICorner", {
-    CornerRadius = UDim.new(0, 6)
-}, MiscEmpty)
-
-New("TextLabel", {
-    Size = UDim2.new(1, -24, 1, 0),
-    Position = UDim2.fromOffset(12, 0),
-    BackgroundTransparency = 1,
-    Text = "No additional features",
-    TextColor3 = Colors.SubText,
-    TextSize = 12,
-    Font = Enum.Font.Gotham,
-    TextXAlignment = Enum.TextXAlignment.Left
-}, MiscEmpty)
-
---==================================================
--- SETTINGS PAGE INITIALIZATION
---==================================================
-
-if SettingsPage then
-
-    SettingsPage.Visible = false
-
-end
-
---==================================================
--- COMBAT PAGE INITIALIZATION
---==================================================
-
-if CombatPage then
-
-    CombatPage.Visible = true
-    CurrentPage = CombatPage
-
-end
-
---==================================================
--- SIDEBAR ACTIVE STATE
---==================================================
-
-for _, button in ipairs(Sidebar:GetChildren()) do
-
-    if button:IsA("TextButton") then
-
-        if button.Text == "Combat" then
-
-            button.BackgroundColor3 = Colors.Menu
-            button.TextColor3 = Colors.Text
-
-        else
-
-            button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-            button.TextColor3 = Colors.SubText
-
-        end
-
-    end
-
-end
-
---==================================================
--- MENU ANIMATION
---==================================================
-
-if Main then
-
-    Main.Size = UDim2.fromOffset(0, 0)
-
-    Tween(
-        Main,
+local CreatorCard =
+    New(
+        "TextLabel",
         {
-            Size = UDim2.fromOffset(520, 320)
+
+            Size =
+                UDim2.new(
+                    1,
+                    -10,
+                    0,
+                    48
+                ),
+
+            BackgroundColor3 =
+                Colors.Card,
+
+            BorderSizePixel = 0,
+
+            Text =
+                "By: Lunar Hub",
+
+            TextColor3 =
+                Colors.Text,
+
+            TextSize = 11,
+
+            Font =
+                Enum.Font.GothamSemibold,
+
+            TextXAlignment =
+                Enum.TextXAlignment.Left,
+
+            TextYAlignment =
+                Enum.TextYAlignment.Center
+
         },
-        0.35
-    ):Play()
+        SettingsPage
+    )
 
-end
+New(
+    "UICorner",
+    {
+
+        CornerRadius =
+            UDim.new(
+                0,
+                7
+            )
+
+    },
+    CreatorCard
+)
 
 --==================================================
--- GUI CLEANUP
+-- TELEGRAM SECTION
 --==================================================
 
-local function CleanupHub()
+CreateSection(
+    SettingsPage,
+    "Telegram",
+    "Lunar Hub community"
+)
 
-    -- Restore movement
-    local character = LocalPlayer.Character
+local TelegramButton =
+    New(
+        "TextButton",
+        {
 
-    if character then
+            Size =
+                UDim2.new(
+                    1,
+                    -10,
+                    0,
+                    46
+                ),
 
-        local humanoid =
-            character:FindFirstChildOfClass("Humanoid")
+            BackgroundColor3 =
+                Colors.Menu,
 
-        if humanoid then
+            BorderSizePixel = 0,
 
-            humanoid.WalkSpeed = OriginalWalkSpeed
+            Text =
+                "Telegram  •  @lunarhub_script",
 
-            if OriginalUseJumpPower then
+            TextColor3 =
+                Colors.Text,
 
-                humanoid.JumpPower = OriginalJumpPower
+            TextSize = 11,
 
-            else
+            Font =
+                Enum.Font.GothamSemibold,
 
-                humanoid.JumpHeight = OriginalJumpHeight
+            AutoButtonColor = false
 
-            end
+        },
+        SettingsPage
+    )
 
-        end
+New(
+    "UICorner",
+    {
 
-        for _, object in ipairs(character:GetDescendants()) do
+        CornerRadius =
+            UDim.new(
+                0,
+                7
+            )
 
-            if object:IsA("BasePart") then
-                object.CanCollide = true
-            end
-        end
+    },
+    TelegramButton
+)
+
+New(
+    "UIStroke",
+    {
+
+        Color =
+            Colors.Border,
+
+        Thickness = 1
+
+    },
+    TelegramButton
+)
+
+TelegramButton.MouseEnter:Connect(
+    function()
+
+        Tween(
+            TelegramButton,
+            {
+                BackgroundColor3 =
+                    Colors.CardHover
+            },
+            0.12
+        )
 
     end
+)
 
-    -- Restore camera
-    local camera = workspace.CurrentCamera
+TelegramButton.MouseLeave:Connect(
+    function()
 
-    if camera then
-        camera.FieldOfView = OriginalGameFOV
+        Tween(
+            TelegramButton,
+            {
+                BackgroundColor3 =
+                    Colors.Menu
+            },
+            0.12
+        )
+
     end
+)
 
-    -- Disconnect
-    if MainConnection then
-        MainConnection:Disconnect()
-        MainConnection = nil
-    end
+TelegramButton.MouseButton1Click:Connect(
+    function()
 
-    if CharacterConnection then
-        CharacterConnection:Disconnect()
-        CharacterConnection = nil
-    end
+        local url =
+            "https://t.me/lunarhub_script"
 
-    -- Remove ESP
-    if ESPObjects then
+        pcall(
+            function()
 
-        for player, data in pairs(ESPObjects) do
+                if setclipboard then
 
-            if data then
-
-                for _, object in pairs(data) do
-
-                    if typeof(object) == "Instance"
-                    and object.Parent then
-
-                        object:Destroy()
-
-                    end
+                    setclipboard(url)
 
                 end
 
             end
+        )
 
-            ESPObjects[player] = nil
+        TelegramButton.Text =
+            "Telegram link copied!"
+
+        task.delay(
+            1.5,
+            function()
+
+                if TelegramButton then
+
+                    TelegramButton.Text =
+                        "Telegram  •  @lunarhub_script"
+
+                end
+
+            end
+        )
+
+    end
+)
+
+--==================================================
+-- STATUS
+--==================================================
+
+local SettingsStatus =
+    New(
+        "TextLabel",
+        {
+
+            Size =
+                UDim2.new(
+                    1,
+                    -10,
+                    0,
+                    45
+                ),
+
+            BackgroundTransparency = 1,
+
+            Text =
+                "Lunar Hub v3.0",
+
+            TextColor3 =
+                Colors.SubText,
+
+            TextSize = 10,
+
+            Font =
+                Enum.Font.Gotham,
+
+            TextXAlignment =
+                Enum.TextXAlignment.Left,
+
+            TextYAlignment =
+                Enum.TextYAlignment.Center
+
+        },
+        SettingsPage
+    )
+
+--==================================================
+-- CLOSE BUTTON
+--==================================================
+
+local function Cleanup()
+
+    Config.Speed =
+        false
+
+    Config.Jump =
+        false
+
+    Config.Noclip =
+        false
+
+    Config.FOVChanger =
+        false
+
+    pcall(
+        function()
+
+            if Humanoid then
+
+                Humanoid.WalkSpeed =
+                    OriginalWalkSpeed
+
+                Humanoid.UseJumpPower =
+                    true
+
+                Humanoid.JumpPower =
+                    OriginalJumpPower
+
+                Humanoid.JumpHeight =
+                    OriginalJumpHeight
+
+            end
+
+        end
+    )
+
+    pcall(
+        function()
+
+            RestoreCollision()
+
+        end
+    )
+
+    pcall(
+        function()
+
+            if Camera then
+
+                Camera.FieldOfView = 70
+
+            end
+
+        end
+    )
+
+    pcall(
+        function()
+
+            if NoclipConnection then
+
+                NoclipConnection:Disconnect()
+
+            end
+
+        end
+    )
+
+    pcall(
+        function()
+
+            if MovementConnection then
+
+                MovementConnection:Disconnect()
+
+            end
+
+    end)
+
+    pcall(
+        function()
+
+            for player, _ in pairs(
+                ESPObjects
+            ) do
+
+                StopESP(player)
+
+            end
+
+        end
+    )
+
+    pcall(
+        function()
+
+            if Gui then
+
+                Gui:Destroy()
+
+            end
+
+        end
+    )
+
+end
+
+CloseButton.MouseButton1Click:Connect(
+    function()
+
+        Cleanup()
+
+    end
+)
+
+--==================================================
+-- DRAG MENU
+--==================================================
+
+local Dragging = false
+local DragStart
+local StartPosition
+
+TopBar.InputBegan:Connect(
+    function(input)
+
+        if input.UserInputType ==
+            Enum.UserInputType.MouseButton1
+            or
+            input.UserInputType ==
+            Enum.UserInputType.Touch
+        then
+
+            Dragging = true
+
+            DragStart =
+                input.Position
+
+            StartPosition =
+                Main.Position
 
         end
 
     end
+)
 
-end
+TopBar.InputEnded:Connect(
+    function(input)
+
+        if input.UserInputType ==
+            Enum.UserInputType.MouseButton1
+            or
+            input.UserInputType ==
+            Enum.UserInputType.Touch
+        then
+
+            Dragging = false
+
+        end
+
+    end
+)
+
+UserInputService.InputChanged:Connect(
+    function(input)
+
+        if not Dragging then
+            return
+        end
+
+        if input.UserInputType ~=
+            Enum.UserInputType.MouseMovement
+            and
+            input.UserInputType ~=
+            Enum.UserInputType.Touch
+        then
+
+            return
+
+        end
+
+        local Delta =
+            input.Position -
+            DragStart
+
+        Main.Position =
+            UDim2.new(
+                StartPosition.X.Scale,
+                StartPosition.X.Offset +
+                    Delta.X,
+
+                StartPosition.Y.Scale,
+                StartPosition.Y.Offset +
+                    Delta.Y
+            )
+
+    end
+)
 
 --==================================================
--- GUI DESTROY HANDLER
+-- DEFAULT PAGE
 --==================================================
 
-if Gui then
-
-    Gui.Destroying:Connect(function()
-
-        pcall(function()
-            CleanupHub()
-        end)
-
-    end)
-
-end
+SetPage(CombatPage)
 
 --==================================================
 -- FINAL STATUS
 --==================================================
 
-print("======================================")
-print("[Neutralization Hub]")
-print("Final build loaded successfully.")
-print("Aim Assist      : READY")
-print("ESP             : READY")
-print("Movement        : READY")
-print("Noclip          : READY")
-print("FOV Changer     : READY")
-print("Settings        : READY")
-print("Telegram        : https://t.me/lunarhub_script")
-print("======================================")
+print(
+    "================================"
+)
+
+print(
+    "[Lunar Hub] v3.0 loaded."
+)
+
+print(
+    "[Lunar Hub] By: Lunar Hub"
+)
+
+print(
+    "[Lunar Hub] All 6 parts loaded."
+)
+
+print(
+    "================================"
+)
+
+--==================================================
+-- END OF LUNAR HUB v3.0
+--==================================================
