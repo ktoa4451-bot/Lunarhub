@@ -8941,3 +8941,45 @@ pcall(function()
 end)
 
 print("NEUTRALIZATION HUB FINAL PATCH PART 2/2 LOADED")
+
+-- =========================================================
+-- NEUTRALIZATION HUB — FORCE OPEN FIX
+-- НИЧЕГО СТАРОГО НЕ УДАЛЯЕМ
+-- =========================================================
+
+task.delay(0.5, function()
+
+    pcall(function()
+
+        if Main then
+            Main.Visible = true
+
+            Main.Size = UDim2.fromOffset(520, 320)
+
+            Main.Position = UDim2.new(
+                0.5, -260,
+                0.5, -160
+            )
+
+            -- Сбрасываем возможное скрытие/уменьшение
+            local scale = Main:FindFirstChild("NeutralizationMainScale")
+
+            if scale then
+                scale.Scale = 1
+            end
+        end
+
+        -- Старые floating-кнопки не трогаем,
+        -- просто прячем их при обычном запуске
+        if NeutralizationFloatingButton then
+            NeutralizationFloatingButton.Visible = false
+        end
+
+        print("================================")
+        print("NEUTRALIZATION HUB")
+        print("MENU FORCE OPEN FIX: OK")
+        print("================================")
+
+    end)
+
+end)
