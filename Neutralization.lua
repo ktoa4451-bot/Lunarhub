@@ -1182,8 +1182,11 @@ local PageDescriptions = {
 --========================================================
 
 local CategoryButtons = {}
+local CategoryIndex = 0
 
 local function CreateCategoryButton(name, text, icon)
+    CategoryIndex = CategoryIndex + 1
+
     local Button = Instance.new("TextButton")
     Button.Name = name .. "Button"
     Button.Parent = Sidebar
@@ -1191,7 +1194,15 @@ local function CreateCategoryButton(name, text, icon)
     Button.BackgroundTransparency = 1
     Button.BorderSizePixel = 0
     Button.Size = UDim2.new(1, -20, 0, 38)
-    Button.Position = UDim2.new(0, 10, 0, 78 + (#CategoryButtons * 44))
+
+    -- ИСПРАВЛЕНО: каждая категория получает своё место
+    Button.Position = UDim2.new(
+        0,
+        10,
+        0,
+        58 + ((CategoryIndex - 1) * 48)
+    )
+
     Button.AutoButtonColor = false
     Button.Text = ""
     Button.ZIndex = 23
@@ -1231,7 +1242,11 @@ local function CreateCategoryButton(name, text, icon)
         if CurrentPage ~= name then
             TweenService:Create(
                 Button,
-                TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                TweenInfo.new(
+                    0.15,
+                    Enum.EasingStyle.Quad,
+                    Enum.EasingDirection.Out
+                ),
                 {
                     BackgroundTransparency = 0.45
                 }
@@ -1239,7 +1254,11 @@ local function CreateCategoryButton(name, text, icon)
 
             TweenService:Create(
                 Icon,
-                TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                TweenInfo.new(
+                    0.15,
+                    Enum.EasingStyle.Quad,
+                    Enum.EasingDirection.Out
+                ),
                 {
                     TextColor3 = Color3.fromRGB(220, 220, 225)
                 }
@@ -1247,7 +1266,11 @@ local function CreateCategoryButton(name, text, icon)
 
             TweenService:Create(
                 Label,
-                TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                TweenInfo.new(
+                    0.15,
+                    Enum.EasingStyle.Quad,
+                    Enum.EasingDirection.Out
+                ),
                 {
                     TextColor3 = Color3.fromRGB(225, 225, 230)
                 }
@@ -1259,7 +1282,11 @@ local function CreateCategoryButton(name, text, icon)
         if CurrentPage ~= name then
             TweenService:Create(
                 Button,
-                TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                TweenInfo.new(
+                    0.15,
+                    Enum.EasingStyle.Quad,
+                    Enum.EasingDirection.Out
+                ),
                 {
                     BackgroundTransparency = 1
                 }
@@ -1267,7 +1294,11 @@ local function CreateCategoryButton(name, text, icon)
 
             TweenService:Create(
                 Icon,
-                TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                TweenInfo.new(
+                    0.15,
+                    Enum.EasingStyle.Quad,
+                    Enum.EasingDirection.Out
+                ),
                 {
                     TextColor3 = Color3.fromRGB(155, 155, 165)
                 }
@@ -1275,7 +1306,11 @@ local function CreateCategoryButton(name, text, icon)
 
             TweenService:Create(
                 Label,
-                TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                TweenInfo.new(
+                    0.15,
+                    Enum.EasingStyle.Quad,
+                    Enum.EasingDirection.Out
+                ),
                 {
                     TextColor3 = Color3.fromRGB(175, 175, 185)
                 }
@@ -1292,12 +1327,10 @@ local function CreateCategoryButton(name, text, icon)
     return Button
 end
 
-
 CreateCategoryButton("Combat", "Combat", "⚔")
 CreateCategoryButton("Visuals", "Visuals", "◉")
 CreateCategoryButton("Movement", "Movement", "↕")
 CreateCategoryButton("Settings", "Settings", "⚙")
-
 
 --========================================================
 -- INITIAL PAGE STATE
@@ -1305,6 +1338,7 @@ CreateCategoryButton("Settings", "Settings", "⚙")
 
 local CurrentPage = "Combat"
 local SwitchPage
+    
 
 
 --========================================================
