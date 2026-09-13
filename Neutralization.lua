@@ -3924,6 +3924,38 @@ end)
 -- FINAL
 --========================================================
 
+--========================================================
+-- FRIENDLY CHECK (единая проверка для всех систем)
+--========================================================
+
+local function ShouldSkipPlayer(player)
+    -- Себя пропускаем
+    if not player or player == LocalPlayer then
+        return true
+    end
+
+    -- Проверка по команде (если у обоих есть команда)
+    if LocalPlayer.Team ~= nil and player.Team ~= nil then
+        if LocalPlayer.Team == player.Team then
+            return true
+        end
+    end
+
+    -- Если игрок в той же команде по имени (на случай кастомных систем)
+    if player.Team ~= nil and LocalPlayer.Team ~= nil then
+        if player.Team.Name == LocalPlayer.Team.Name then
+            return true
+        end
+    end
+
+    -- Если игрок в списке союзников (если есть)
+    if _G.AllyList and _G.AllyList[player.Name] then
+        return true
+    end
+
+    return false
+end
+
 print("Neutralization Hub " .. tostring(Config.Version) .. " loaded successfully.")
 
 
