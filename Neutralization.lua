@@ -6719,3 +6719,2225 @@ end)
 -- =========================================================
 
 print("Neutralization Hub final update loaded.")
+
+-- =========================================================
+-- NEUTRALIZATION HUB
+-- FINAL FIX / AIM + ESP
+-- PART 1/2
+-- =========================================================
+
+pcall(function()
+
+    -- =====================================================
+    -- 1. BASIC SETTINGS
+    -- =====================================================
+
+    Config.AimFOV = true
+
+    Config.AimFOVSize =
+        math.clamp(
+            tonumber(Config.AimFOVSize) or 150,
+            25,
+            1000
+        )
+
+    local FRIENDLY_COLOR =
+        Color3.fromRGB(55, 150, 255)
+
+    local ENEMY_COLOR =
+        Color3.fromRGB(255, 55, 55)
+
+
+    -- =====================================================
+    -- 2. TEAM DETECTION
+    -- =====================================================
+
+    local function Neutralization_IsFriendly(player)
+
+        if not player then
+            return false
+        end
+
+        if player == LocalPlayer then
+            return true
+        end
+
+        if LocalPlayer.Team
+            and player.Team
+        then
+            return player.Team == LocalPlayer.Team
+        end
+
+        return false
+    end
+
+
+    local function Neutralization_GetESPColor(player)
+
+        if Neutralization_IsFriendly(player) then
+            return FRIENDLY_COLOR
+        end
+
+        return ENEMY_COLOR
+    end
+
+
+    -- =====================================================
+    -- 3. FIX AIM CENTER
+    -- =====================================================
+
+    GetMousePosition = function()
+
+        local camera =
+            workspace.CurrentCamera
+
+        if not camera then
+            return Vector2.new(0, 0)
+        end
+
+        local viewport =
+            camera.ViewportSize
+
+        return Vector2.new(
+            viewport.X / 2,
+            viewport.Y / 2
+        )
+
+    end
+
+
+    -- =====================================================
+    -- 4. FIX AIM FOV CIRCLE
+    -- =====================================================
+
+    UpdateFOVCircle = function()
+
+        if not FOVCircle then
+            return
+        end
+
+        local camera =
+            workspace.CurrentCamera
+
+        if not camera then
+            return
+        end
+
+        local viewport =
+            camera.ViewportSize
+
+        local radius =
+            math.clamp(
+                tonumber(Config.AimFOVSize) or 150,
+                25,
+                1000
+            )
+
+        FOVCircle.AnchorPoint =
+            Vector2.new(0.5, 0.5)
+
+        FOVCircle.Size =
+            UDim2.fromOffset(
+                radius * 2,
+                radius * 2
+            )
+
+        FOVCircle.Position =
+            UDim2.fromOffset(
+                viewport.X / 2,
+                viewport.Y / 2
+            )
+
+        FOVCircle.Visible =
+            Config.AimFOV == true
+
+    end
+
+
+    -- =====================================================
+    -- 5. FULL AIM TARGET SYSTEM
+    -- =====================================================
+
+    GetBestTarget = function()
+
+        local camera =
+            workspace.CurrentCamera
+
+        if not camera then
+            return nil, nil
+        end
+
+        local center =
+            GetMousePosition()
+
+        local radius =
+            math.max(
+                1,
+                tonumber(Config.AimFOVSize) or 150
+            )
+
+        local bestPlayer = nil
+        local bestPart = nil
+        local bestDistance = math.huge
+
+
+        for _, player in ipairs(
+            Players:GetPlayers()
+        ) do
+
+            if player ~= LocalPlayer then
+
+                -- NEVER AIM AT ALLIES
+                if not Neutralization_IsFriendly(player) then
+
+                    local character =
+                        player.Character
+
+                    if character then
+
+                        local humanoid =
+                            character:FindFirstChildOfClass(
+                                "Humanoid"
+                            )
+
+                        if humanoid
+                            and humanoid.Health > 0
+                        then
+
+                            local part =
+                                character:FindFirstChild(
+                                    Config.TargetPart
+                                )
+
+                            if not part
+                                or not part:IsA("BasePart")
+                            then
+                                part =
+                                    character:FindFirstChild("Head")
+                            end
+
+                            if not part
+                                or not part:IsA("BasePart")
+                            then
+                                part =
+                                    character:FindFirstChild(
+                                        "HumanoidRootPart"
+                                    )
+                            end
+
+
+                            if part
+                                and part:IsA("BasePart")
+                            then
+
+                                local screenPosition,
+                                    onScreen =
+                                    camera:WorldToViewportPoint(
+                                        part.Position
+                                    )
+
+                                if onScreen then
+
+                                    local point =
+                                        Vector2.new(
+                                            screenPosition.X,
+                                            screenPosition.Y
+                                        )
+
+                                    local distance =
+                                        (
+                                            point - center
+                                        ).Magnitude
+
+                                    if distance <= radius then
+
+                                        local visible = true
+
+                                        if Config.VisibleOnly then
+
+                                            local origin =
+                                                camera.CFrame.Position
+
+                                            local direction =
+                                                part.Position -
+                                                origin
+
+                                            local rayParams =
+                                                RaycastParams.new()
+
+                                            rayParams.FilterType =
+                                                Enum.RaycastFilterType.Exclude
+
+                                            rayParams.FilterDescendantsInstances = {
+                                                LocalPlayer.Character,
+                                                camera
+                                            }
+
+                                            rayParams.IgnoreWater =
+                                                true
+
+                                            local result =
+                                                workspace:Raycast(
+                                                    origin,
+                                                    direction,
+                                                    rayParams
+                                                )
+
+                                            if result
+                                                and not result.Instance:IsDescendantOf(
+                                                    character
+                                                )
+                                            then
+                                                visible = false
+                                            end
+
+                                        end
+
+
+                                        if visible
+                                            and distance < bestDistance
+                                        then
+
+                                            bestDistance =
+                                                distance
+
+                                            bestPlayer =
+                                                player
+
+                                            bestPart =
+                                                part
+
+                                        end
+
+                                    end
+
+                                end
+
+                            end
+
+                        end
+
+                    end
+
+                end
+
+            end
+
+        end
+
+
+        -- IMPORTANT:
+        -- RETURN BOTH PLAYER AND BODY PART
+        return bestPlayer, bestPart
+
+    end
+
+
+    -- =====================================================
+    -- 6. FIX AIM CONNECTION
+    -- =====================================================
+
+    pcall(function()
+
+        if AimConnection then
+            AimConnection:Disconnect()
+        end
+
+    end)
+
+
+    AimConnection =
+        RunService.RenderStepped:Connect(
+            function()
+
+                if not Config.AimAssist then
+
+                    CurrentTarget = nil
+                    CurrentTargetPart = nil
+
+                    return
+
+                end
+
+
+                if not LocalPlayer.Character then
+
+                    CurrentTarget = nil
+                    CurrentTargetPart = nil
+
+                    return
+
+                end
+
+
+                local targetPlayer,
+                    targetPart =
+                    GetBestTarget()
+
+
+                CurrentTarget =
+                    targetPlayer
+
+                CurrentTargetPart =
+                    targetPart
+
+
+                if targetPart then
+
+                    pcall(function()
+                        AimAt(targetPart)
+                    end)
+
+                end
+
+            end
+        )
+
+
+    -- =====================================================
+    -- 7. ESP SETTINGS
+    -- =====================================================
+
+    Config.ModelESP =
+        Config.ModelESP == true
+
+    Config.SquareESP =
+        Config.SquareESP ~= false
+
+    Config.ESPTeamColors =
+        true
+
+
+    -- =====================================================
+    -- 8. VISUAL CONTROLS
+    -- =====================================================
+
+    pcall(function()
+
+        CreateSection(
+            VisualPage,
+            "Advanced ESP",
+            "Additional player visual modes"
+        )
+
+
+        CreateToggle(
+            VisualPage,
+            "Model ESP",
+            Config.ModelESP,
+            function(value)
+
+                Config.ModelESP =
+                    value == true
+
+            end
+        )
+
+
+        CreateToggle(
+            VisualPage,
+            "Square Box",
+            true,
+            function(value)
+
+                Config.SquareESP =
+                    value == true
+
+            end
+        )
+
+
+        CreateToggle(
+            VisualPage,
+            "Team Colors",
+            true,
+            function(value)
+
+                Config.ESPTeamColors =
+                    value == true
+
+            end
+        )
+
+    end)
+
+
+    -- =====================================================
+    -- 9. MODEL ESP
+    -- =====================================================
+
+    local function EnsureModelESP(player, data)
+
+        if not data then
+            return
+        end
+
+
+        if not data.ModelHighlight then
+
+            local highlight =
+                Instance.new("Highlight")
+
+            highlight.Name =
+                "NeutralizationModelESP"
+
+            highlight.DepthMode =
+                Enum.HighlightDepthMode.AlwaysOnTop
+
+            highlight.FillTransparency =
+                0.82
+
+            highlight.OutlineTransparency =
+                0
+
+            highlight.Enabled =
+                false
+
+            highlight.Parent =
+                Gui
+
+            data.ModelHighlight =
+                highlight
+
+        end
+
+
+        local highlight =
+            data.ModelHighlight
+
+        local character =
+            player.Character
+
+
+        if not character then
+
+            highlight.Enabled =
+                false
+
+            return
+
+        end
+
+
+        highlight.Adornee =
+            character
+
+        highlight.Enabled =
+            Config.ESP
+            and Config.ModelESP
+
+
+        local color =
+            Neutralization_GetESPColor(
+                player
+            )
+
+
+        highlight.FillColor =
+            color
+
+        highlight.OutlineColor =
+            color
+
+    end
+
+
+    -- =====================================================
+    -- 10. ESP UPDATE
+    -- =====================================================
+
+    UpdateESP = function()
+
+        for player, data in pairs(
+            ESPObjects
+        ) do
+
+            local character =
+                player.Character
+
+            local shouldShow =
+                Config.ESP
+
+            local humanoid = nil
+
+
+            if character then
+
+                humanoid =
+                    character:FindFirstChildOfClass(
+                        "Humanoid"
+                    )
+
+            end
+
+
+            if not humanoid
+                or humanoid.Health <= 0
+            then
+
+                shouldShow =
+                    false
+
+            end
+
+
+            EnsureModelESP(
+                player,
+                data
+            )
+
+
+            if shouldShow
+                and character
+                and humanoid
+            then
+
+                local bounds =
+                    GetCharacterBounds(
+                        character
+                    )
+
+
+                if bounds then
+
+                    local color =
+                        Neutralization_GetESPColor(
+                            player
+                        )
+
+
+                    -- =================================================
+                    -- SQUARE BOX
+                    -- =================================================
+
+                    data.Box.Visible =
+                        Config.BoxESP
+
+
+                    if Config.BoxESP then
+
+                        local size =
+                            math.max(
+                                bounds.Width,
+                                bounds.Height,
+                                2
+                            )
+
+
+                        local centerX =
+                            bounds.X +
+                            bounds.Width / 2
+
+
+                        local centerY =
+                            bounds.Y +
+                            bounds.Height / 2
+
+
+                        data.Box.Position =
+                            UDim2.fromOffset(
+                                centerX - size / 2,
+                                centerY - size / 2
+                            )
+
+
+                        data.Box.Size =
+                            UDim2.fromOffset(
+                                size,
+                                size
+                            )
+
+
+                        local stroke =
+                            data.Box:FindFirstChildOfClass(
+                                "UIStroke"
+                            )
+
+
+                        if stroke then
+
+                            stroke.Color =
+                                color
+
+                            stroke.Thickness =
+                                2
+
+                            stroke.Transparency =
+                                0
+
+                        end
+
+                    end
+
+
+                    -- =================================================
+                    -- NAME
+                    -- =================================================
+
+                    data.Name.Visible =
+                        Config.Names
+
+
+                    if Config.Names then
+
+                        data.Name.Position =
+                            UDim2.fromOffset(
+                                bounds.X +
+                                bounds.Width / 2,
+                                bounds.Y - 20
+                            )
+
+                        data.Name.Text =
+                            player.Name
+
+                        data.Name.TextColor3 =
+                            color
+
+                    end
+
+
+                    -- =================================================
+                    -- HEALTH
+                    -- =================================================
+
+                    data.Health.Visible =
+                        Config.Health
+
+
+                    if Config.Health then
+
+                        local health =
+                            math.max(
+                                0,
+                                humanoid.Health
+                            )
+
+                        local maxHealth =
+                            math.max(
+                                1,
+                                humanoid.MaxHealth
+                            )
+
+
+                        data.Health.Position =
+                            UDim2.fromOffset(
+                                bounds.X +
+                                bounds.Width +
+                                5,
+                                bounds.Y
+                            )
+
+
+                        data.Health.Text =
+                            string.format(
+                                "HP: %d/%d",
+                                math.floor(health),
+                                math.floor(maxHealth)
+                            )
+
+                        data.Health.TextColor3 =
+                            color
+
+                    end
+
+
+                    -- =================================================
+                    -- DISTANCE
+                    -- =================================================
+
+                    data.Distance.Visible =
+                        Config.Distance
+
+
+                    if Config.Distance then
+
+                        local root =
+                            character:FindFirstChild(
+                                "HumanoidRootPart"
+                            )
+
+                        local localCharacter =
+                            LocalPlayer.Character
+
+
+                        if root
+                            and localCharacter
+                        then
+
+                            local localRoot =
+                                localCharacter:FindFirstChild(
+                                    "HumanoidRootPart"
+                                )
+
+
+                            if localRoot then
+
+                                local distance =
+                                    (
+                                        root.Position -
+                                        localRoot.Position
+                                    ).Magnitude
+
+
+                                data.Distance.Position =
+                                    UDim2.fromOffset(
+                                        bounds.X +
+                                        bounds.Width +
+                                        5,
+                                        bounds.Y + 18
+                                    )
+
+
+                                data.Distance.Text =
+                                    string.format(
+                                        "%.0f studs",
+                                        distance
+                                    )
+
+                                data.Distance.TextColor3 =
+                                    color
+
+                            end
+
+                        end
+
+                    end
+
+
+                else
+
+                    data.Box.Visible = false
+                    data.Name.Visible = false
+                    data.Health.Visible = false
+                    data.Distance.Visible = false
+
+                end
+
+
+            else
+
+                data.Box.Visible = false
+                data.Name.Visible = false
+                data.Health.Visible = false
+                data.Distance.Visible = false
+
+            end
+-- =================================================
+-- DISTANCE
+-- =================================================
+
+data.Distance.Visible =
+    Config.Distance
+
+
+if Config.Distance then
+
+    local root =
+        character:FindFirstChild(
+            "HumanoidRootPart"
+        )
+
+    local localCharacter =
+        LocalPlayer.Character
+
+
+    if root
+        and localCharacter
+    then
+
+        local localRoot =
+            localCharacter:FindFirstChild(
+                "HumanoidRootPart"
+            )
+
+
+        if localRoot then
+
+            local distance =
+                (
+                    root.Position -
+                    localRoot.Position
+                ).Magnitude
+
+
+            data.Distance.Position =
+                UDim2.fromOffset(
+                    bounds.X +
+                    bounds.Width +
+                    5,
+                    bounds.Y + 18
+                )
+
+
+            data.Distance.Text =
+                string.format(
+                    "%.0f studs",
+                    distance
+                )
+
+
+            data.Distance.TextColor3 =
+                color
+
+        end
+
+    end
+
+end
+
+
+-- =================================================
+-- HIDE ESP WHEN INVALID
+-- =================================================
+
+else
+
+    data.Box.Visible = false
+    data.Name.Visible = false
+    data.Health.Visible = false
+    data.Distance.Visible = false
+
+end
+
+
+else
+
+    data.Box.Visible = false
+    data.Name.Visible = false
+    data.Health.Visible = false
+    data.Distance.Visible = false
+
+end
+
+end
+
+
+-- =========================================================
+-- ESP LOOP
+-- =========================================================
+
+if not ESPConnection then
+
+    ESPConnection =
+        RunService.RenderStepped:Connect(
+            function()
+
+                pcall(function()
+                    UpdateESP()
+                end)
+
+            end
+        )
+
+end
+
+
+print(
+    "[Neutralization Hub] PART 1/2 LOADED"
+)
+
+
+end)
+
+
+-- =========================================================
+-- NEUTRALIZATION HUB
+-- FINAL FIX / UI + ANIMATIONS
+-- PART 2/2
+-- =========================================================
+
+pcall(function()
+
+    -- =====================================================
+    -- REMOVE OLD FLOATING BUTTON
+    -- =====================================================
+
+    local OldFloating =
+        Gui:FindFirstChild(
+            "NeutralizationFloatingButton"
+        )
+
+    if OldFloating then
+        OldFloating:Destroy()
+    end
+
+
+    -- =====================================================
+    -- CREATE FLOATING BUTTON
+    -- =====================================================
+
+    local FloatingButton =
+        Instance.new("TextButton")
+
+    FloatingButton.Name =
+        "NeutralizationFloatingButton"
+
+    FloatingButton.Parent =
+        Gui
+
+    FloatingButton.Size =
+        UDim2.fromOffset(54, 54)
+
+    FloatingButton.AnchorPoint =
+        Vector2.new(0.5, 0.5)
+
+    FloatingButton.Position =
+        UDim2.new(0, 65, 1, -65)
+
+    FloatingButton.BackgroundColor3 =
+        Colors.Menu
+
+    FloatingButton.Text =
+        "N"
+
+    FloatingButton.TextColor3 =
+        Colors.Text
+
+    FloatingButton.TextSize =
+        24
+
+    FloatingButton.Font =
+        Enum.Font.GothamBold
+
+    FloatingButton.AutoButtonColor =
+        false
+
+    FloatingButton.Visible =
+        false
+
+    FloatingButton.ZIndex =
+        999
+
+
+    local FloatingCorner =
+        Instance.new("UICorner")
+
+    FloatingCorner.CornerRadius =
+        UDim.new(1, 0)
+
+    FloatingCorner.Parent =
+        FloatingButton
+
+
+    local FloatingStroke =
+        Instance.new("UIStroke")
+
+    FloatingStroke.Color =
+        Colors.Menu
+
+    FloatingStroke.Thickness =
+        2
+
+    FloatingStroke.Transparency =
+        0.15
+
+    FloatingStroke.Parent =
+        FloatingButton
+
+
+    -- =====================================================
+    -- DRAG FLOATING BUTTON
+    -- =====================================================
+
+    local FloatingDragging =
+        false
+
+    local FloatingMoved =
+        false
+
+    local FloatingDragStart =
+        nil
+
+    local FloatingStartPosition =
+        nil
+
+
+    FloatingButton.InputBegan:Connect(
+        function(input)
+
+            if input.UserInputType ==
+                Enum.UserInputType.MouseButton1
+                or
+                input.UserInputType ==
+                Enum.UserInputType.Touch
+            then
+
+                FloatingDragging =
+                    true
+
+                FloatingMoved =
+                    false
+
+                FloatingDragStart =
+                    input.Position
+
+                FloatingStartPosition =
+                    FloatingButton.Position
+
+            end
+
+        end
+    )
+
+
+    FloatingButton.InputEnded:Connect(
+        function(input)
+
+            if input.UserInputType ==
+                Enum.UserInputType.MouseButton1
+                or
+                input.UserInputType ==
+                Enum.UserInputType.Touch
+            then
+
+                FloatingDragging =
+                    false
+
+            end
+
+        end
+    )
+
+
+    UserInputService.InputChanged:Connect(
+        function(input)
+
+            if not FloatingDragging then
+                return
+            end
+
+            if input.UserInputType ~=
+                Enum.UserInputType.MouseMovement
+                and
+                input.UserInputType ~=
+                Enum.UserInputType.Touch
+            then
+                return
+            end
+
+
+            local delta =
+                input.Position -
+                FloatingDragStart
+
+
+            if math.abs(delta.X) > 4
+                or
+                math.abs(delta.Y) > 4
+            then
+
+                FloatingMoved =
+                    true
+
+            end
+
+
+            FloatingButton.Position =
+                UDim2.new(
+                    FloatingStartPosition.X.Scale,
+                    FloatingStartPosition.X.Offset +
+                        delta.X,
+
+                    FloatingStartPosition.Y.Scale,
+                    FloatingStartPosition.Y.Offset +
+                        delta.Y
+                )
+
+        end
+    )
+
+
+    -- =====================================================
+    -- MINIMIZE BUTTON
+    -- =====================================================
+
+    local OldMinimize =
+        TopBar:FindFirstChild(
+            "NeutralizationMinimize"
+        )
+
+    if OldMinimize then
+        OldMinimize:Destroy()
+    end
+
+
+    local MinimizeButton =
+        Instance.new("TextButton")
+
+    MinimizeButton.Name =
+        "NeutralizationMinimize"
+
+    MinimizeButton.Parent =
+        TopBar
+
+    MinimizeButton.Size =
+        UDim2.fromOffset(30, 30)
+
+    MinimizeButton.Position =
+        UDim2.new(1, -68, 0, 9)
+
+    MinimizeButton.BackgroundTransparency =
+        1
+
+    MinimizeButton.Text =
+        "−"
+
+    MinimizeButton.TextColor3 =
+        Colors.Text
+
+    MinimizeButton.TextSize =
+        22
+
+    MinimizeButton.Font =
+        Enum.Font.GothamBold
+
+    MinimizeButton.AutoButtonColor =
+        false
+
+
+    -- =====================================================
+    -- MAIN SCALE
+    -- =====================================================
+
+    local MainScale =
+        Main:FindFirstChild(
+            "NeutralizationFinalScale"
+        )
+
+
+    if not MainScale then
+
+        MainScale =
+            Instance.new("UIScale")
+
+        MainScale.Name =
+            "NeutralizationFinalScale"
+
+        MainScale.Scale =
+            1
+
+        MainScale.Parent =
+            Main
+
+    end
+
+
+    local function Animate(
+        object,
+        properties,
+        duration,
+        style,
+        direction
+    )
+
+        if not object then
+            return
+        end
+
+
+        local info =
+            TweenInfo.new(
+                duration or 0.25,
+                style or Enum.EasingStyle.Quint,
+                direction or Enum.EasingDirection.Out
+            )
+
+
+        local tween =
+            TweenService:Create(
+                object,
+                info,
+                properties
+            )
+
+
+        tween:Play()
+
+        return tween
+
+    end
+
+
+    -- =====================================================
+    -- MINIMIZE / RESTORE
+    -- =====================================================
+
+    local MenuMinimized =
+        false
+
+
+    MinimizeButton.MouseEnter:Connect(
+        function()
+
+            Animate(
+                MinimizeButton,
+                {
+                    TextSize = 27
+                },
+                0.15,
+                Enum.EasingStyle.Back
+            )
+
+        end
+    )
+
+
+    MinimizeButton.MouseLeave:Connect(
+        function()
+
+            Animate(
+                MinimizeButton,
+                {
+                    TextSize = 22
+                },
+                0.15
+            )
+
+        end
+    )
+
+
+    MinimizeButton.MouseButton1Click:Connect(
+        function()
+
+            if MenuMinimized then
+                return
+            end
+
+
+            MenuMinimized =
+                true
+
+
+            Animate(
+                MinimizeButton,
+                {
+                    Rotation = -90
+                },
+                0.20,
+                Enum.EasingStyle.Back
+            )
+
+
+            Animate(
+                MainScale,
+                {
+                    Scale = 0.88
+                },
+                0.12
+            )
+
+
+            task.wait(0.12)
+
+
+            Animate(
+                MainScale,
+                {
+                    Scale = 0.02
+                },
+                0.28,
+                Enum.EasingStyle.Back,
+                Enum.EasingDirection.In
+            )
+
+
+            task.wait(0.22)
+
+
+            Main.Visible =
+                false
+
+
+            FloatingButton.Visible =
+                true
+
+
+            FloatingButton.Size =
+                UDim2.fromOffset(20, 20)
+
+            FloatingButton.TextTransparency =
+                1
+
+
+            Animate(
+                FloatingButton,
+                {
+                    Size =
+                        UDim2.fromOffset(54, 54),
+
+                    TextTransparency =
+                        0
+                },
+                0.38,
+                Enum.EasingStyle.Back
+            )
+
+        end
+    )
+
+
+    -- =====================================================
+    -- RESTORE
+    -- =====================================================
+
+    FloatingButton.MouseButton1Click:Connect(
+        function()
+
+            if FloatingMoved then
+
+                FloatingMoved =
+                    false
+
+                return
+
+            end
+
+
+            if not MenuMinimized then
+                return
+            end
+
+
+            MenuMinimized =
+                false
+
+
+            Animate(
+                FloatingButton,
+                {
+                    Size =
+                        UDim2.fromOffset(20, 20),
+
+                    TextTransparency =
+                        1
+                },
+                0.22,
+                Enum.EasingStyle.Quint,
+                Enum.EasingDirection.In
+            )
+
+
+            task.wait(0.20)
+
+
+            FloatingButton.Visible =
+                false
+
+
+            Main.Visible =
+                true
+
+
+            MainScale.Scale =
+                0.02
+
+
+            Animate(
+                MainScale,
+                {
+                    Scale = 1
+                },
+                0.48,
+                Enum.EasingStyle.Back,
+                Enum.EasingDirection.Out
+            )
+
+
+            Animate(
+                MinimizeButton,
+                {
+                    Rotation = 0
+                },
+                0.25,
+                Enum.EasingStyle.Back
+            )
+
+        end
+    )
+
+
+    -- =====================================================
+    -- FLOATING BUTTON HOVER
+    -- =====================================================
+
+    FloatingButton.MouseEnter:Connect(
+        function()
+
+            if FloatingDragging then
+                return
+            end
+
+
+            Animate(
+                FloatingButton,
+                {
+                    Size =
+                        UDim2.fromOffset(60, 60)
+                },
+                0.16,
+                Enum.EasingStyle.Back
+            )
+
+        end
+    )
+
+
+    FloatingButton.MouseLeave:Connect(
+        function()
+
+            if FloatingDragging then
+                return
+            end
+
+
+            Animate(
+                FloatingButton,
+                {
+                    Size =
+                        UDim2.fromOffset(54, 54)
+                },
+                0.16
+            )
+
+        end
+    )
+
+
+    -- =====================================================
+    -- BUTTON ANIMATIONS
+    -- =====================================================
+
+    for _, object in ipairs(
+        Gui:GetDescendants()
+    ) do
+
+        if object:IsA("TextButton") then
+
+            object.AutoButtonColor =
+                false
+
+
+            local scale =
+                object:FindFirstChild(
+                    "NeutralizationButtonScale"
+                )
+
+
+            if not scale then
+
+                scale =
+                    Instance.new("UIScale")
+
+                scale.Name =
+                    "NeutralizationButtonScale"
+
+                scale.Scale =
+                    1
+
+                scale.Parent =
+                    object
+
+            end
+
+
+            object.MouseEnter:Connect(
+                function()
+
+                    if object ==
+                        FloatingButton
+                    then
+                        return
+                    end
+
+
+                    Animate(
+                        scale,
+                        {
+                            Scale = 1.035
+                        },
+                        0.12,
+                        Enum.EasingStyle.Quad
+                    )
+
+                end
+            )
+
+
+            object.MouseLeave:Connect(
+                function()
+
+                    if object ==
+                        FloatingButton
+                    then
+                        return
+                    end
+
+
+                    Animate(
+                        scale,
+                        {
+                            Scale = 1
+                        },
+                        0.14,
+                        Enum.EasingStyle.Back
+                    )
+
+                end
+            )
+
+
+            object.MouseButton1Down:Connect(
+                function()
+
+                    if object ==
+                        FloatingButton
+                    then
+                        return
+                    end
+
+
+                    Animate(
+                        scale,
+                        {
+                            Scale = 0.96
+                        },
+                        0.08,
+                        Enum.EasingStyle.Quad
+                    )
+
+                end
+            )
+
+
+            object.MouseButton1Up:Connect(
+                function()
+
+                    if object ==
+                        FloatingButton
+                    then
+                        return
+                    end
+
+
+                    Animate(
+                        scale,
+                        {
+                            Scale = 1.035
+                        },
+                        0.12,
+                        Enum.EasingStyle.Back
+                    )
+
+                end
+            )
+
+        end
+
+    end
+
+
+    -- =====================================================
+    -- LOGO ANIMATION
+    -- =====================================================
+
+    pcall(function()
+
+        Logo.Active =
+            true
+
+
+        Logo.MouseEnter:Connect(
+            function()
+
+                Animate(
+                    Logo,
+                    {
+                        Rotation = -10
+                    },
+                    0.14,
+                    Enum.EasingStyle.Back
+                )
+
+            end
+        )
+
+
+        Logo.MouseLeave:Connect(
+            function()
+
+                Animate(
+                    Logo,
+                    {
+                        Rotation = 0
+                    },
+                    0.20,
+                    Enum.EasingStyle.Back
+                )
+
+            end
+        )
+
+    end)
+
+
+    -- =====================================================
+    -- KEEP FOV CENTERED
+    -- =====================================================
+
+    RunService.RenderStepped:Connect(
+        function()
+
+            pcall(function()
+                UpdateFOVCircle()
+            end)
+
+        end
+    )
+
+
+    workspace:GetPropertyChangedSignal(
+        "CurrentCamera"
+    ):Connect(
+        function()
+
+            task.wait()
+
+            pcall(function()
+                UpdateFOVCircle()
+            end)
+
+        end
+    )
+
+
+    -- =====================================================
+    -- FINAL REFRESH
+    -- =====================================================
+
+    pcall(function()
+        UpdateESP()
+    end)
+
+
+    pcall(function()
+        UpdateFOVCircle()
+    end)
+
+
+    print(
+        "[Neutralization Hub] FINAL UPDATE LOADED"
+    )
+
+end)
+                -- ==========================================
+-- NEUTRALIZATION HUB FINAL PATCH
+-- PART 2/2 — FLOATING BUTTON + ANIMATIONS
+-- ==========================================
+
+-- Удаляем старую кнопку сворачивания, если она осталась
+pcall(function()
+    if NeutralizationFloatingButton then
+        NeutralizationFloatingButton:Destroy()
+    end
+end)
+
+pcall(function()
+    local old = Gui:FindFirstChild("NeutralizationFloatingButton")
+    if old then
+        old:Destroy()
+    end
+end)
+
+-- ==========================================
+-- FLOATING N BUTTON
+-- ==========================================
+
+local FloatingButton = Instance.new("TextButton")
+FloatingButton.Name = "NeutralizationFloatingButton"
+FloatingButton.Parent = Gui
+FloatingButton.Size = UDim2.fromOffset(54, 54)
+FloatingButton.Position = UDim2.new(0, 65, 1, -65)
+FloatingButton.BackgroundColor3 = Colors.Menu
+FloatingButton.BackgroundTransparency = 0
+FloatingButton.Text = "N"
+FloatingButton.TextColor3 = Color3.fromRGB(255,255,255)
+FloatingButton.TextSize = 25
+FloatingButton.Font = Enum.Font.GothamBold
+FloatingButton.AutoButtonColor = false
+FloatingButton.Visible = false
+FloatingButton.ZIndex = 100
+
+local FloatingCorner = Instance.new("UICorner")
+FloatingCorner.CornerRadius = UDim.new(1, 0)
+FloatingCorner.Parent = FloatingButton
+
+local FloatingStroke = Instance.new("UIStroke")
+FloatingStroke.Color = Colors.MenuDark
+FloatingStroke.Thickness = 2
+FloatingStroke.Transparency = 0.15
+FloatingStroke.Parent = FloatingButton
+
+NeutralizationFloatingButton = FloatingButton
+
+-- ==========================================
+-- FLOATING BUTTON DRAG
+-- ==========================================
+
+local FloatingDragging = false
+local FloatingMoved = false
+local FloatingDragStart
+local FloatingStartPosition
+
+FloatingButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+
+        FloatingDragging = true
+        FloatingMoved = false
+        FloatingDragStart = input.Position
+        FloatingStartPosition = FloatingButton.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                FloatingDragging = false
+            end
+        end)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if not FloatingDragging then
+        return
+    end
+
+    if input.UserInputType ~= Enum.UserInputType.MouseMovement
+        and input.UserInputType ~= Enum.UserInputType.Touch then
+        return
+    end
+
+    local delta = input.Position - FloatingDragStart
+
+    if math.abs(delta.X) > 3 or math.abs(delta.Y) > 3 then
+        FloatingMoved = true
+    end
+
+    FloatingButton.Position = UDim2.new(
+        FloatingStartPosition.X.Scale,
+        FloatingStartPosition.X.Offset + delta.X,
+        FloatingStartPosition.Y.Scale,
+        FloatingStartPosition.Y.Offset + delta.Y
+    )
+end)
+
+-- ==========================================
+-- REMOVE OLD MINIMIZE BUTTON
+-- ==========================================
+
+pcall(function()
+    if NeutralizationMinimize then
+        NeutralizationMinimize:Destroy()
+    end
+end)
+
+pcall(function()
+    local old = Gui:FindFirstChild("NeutralizationMinimize")
+    if old then
+        old:Destroy()
+    end
+end)
+
+-- ==========================================
+-- NEW MINIMIZE BUTTON
+-- ==========================================
+
+local MinimizeButton = Instance.new("TextButton")
+MinimizeButton.Name = "NeutralizationMinimize"
+MinimizeButton.Parent = Main
+MinimizeButton.Size = UDim2.fromOffset(30, 26)
+MinimizeButton.Position = UDim2.new(1, -65, 0, 8)
+MinimizeButton.BackgroundTransparency = 1
+MinimizeButton.Text = "−"
+MinimizeButton.TextColor3 = Color3.fromRGB(220,220,220)
+MinimizeButton.TextSize = 22
+MinimizeButton.Font = Enum.Font.GothamBold
+MinimizeButton.AutoButtonColor = false
+MinimizeButton.ZIndex = 50
+
+NeutralizationMinimize = MinimizeButton
+
+-- ==========================================
+-- SCALE ANIMATION
+-- ==========================================
+
+local MainScale = Main:FindFirstChild("NeutralizationMainScale")
+
+if not MainScale then
+    MainScale = Instance.new("UIScale")
+    MainScale.Name = "NeutralizationMainScale"
+    MainScale.Scale = 1
+    MainScale.Parent = Main
+end
+
+local MenuMinimized = false
+local AnimationBusy = false
+
+local function Animate(instance, properties, duration, style, direction)
+    local tween = TweenService:Create(
+        instance,
+        TweenInfo.new(
+            duration or 0.25,
+            style or Enum.EasingStyle.Quint,
+            direction or Enum.EasingDirection.Out
+        ),
+        properties
+    )
+
+    tween:Play()
+    return tween
+end
+
+-- ==========================================
+-- MINIMIZE
+-- ==========================================
+
+local function MinimizeMenu()
+    if MenuMinimized or AnimationBusy then
+        return
+    end
+
+    AnimationBusy = true
+    MenuMinimized = true
+
+    -- Главное меню красиво уменьшается
+    Animate(
+        MainScale,
+        {Scale = 0.05},
+        0.35,
+        Enum.EasingStyle.Back,
+        Enum.EasingDirection.In
+    )
+
+    task.wait(0.22)
+
+    Main.Visible = false
+
+    -- ВАЖНО:
+    -- Position floating button НЕ меняется.
+    -- Поэтому если пользователь передвинул N,
+    -- оно останется именно там.
+    FloatingButton.Visible = true
+    FloatingButton.Size = UDim2.fromOffset(20,20)
+    FloatingButton.BackgroundTransparency = 1
+    FloatingButton.TextTransparency = 1
+
+    Animate(
+        FloatingButton,
+        {
+            Size = UDim2.fromOffset(54,54),
+            BackgroundTransparency = 0
+        },
+        0.4,
+        Enum.EasingStyle.Back,
+        Enum.EasingDirection.Out
+    )
+
+    Animate(
+        FloatingButton,
+        {TextTransparency = 0},
+        0.25,
+        Enum.EasingStyle.Quint,
+        Enum.EasingDirection.Out
+    )
+
+    task.wait(0.4)
+
+    AnimationBusy = false
+end
+
+-- ==========================================
+-- RESTORE
+-- ==========================================
+
+local function RestoreMenu()
+    if not MenuMinimized or AnimationBusy then
+        return
+    end
+
+    AnimationBusy = true
+    MenuMinimized = false
+
+    -- N исчезает на месте.
+    -- НИКАКОГО перемещения Position здесь нет.
+    Animate(
+        FloatingButton,
+        {
+            Size = UDim2.fromOffset(20,20),
+            BackgroundTransparency = 1,
+            TextTransparency = 1
+        },
+        0.25,
+        Enum.EasingStyle.Back,
+        Enum.EasingDirection.In
+    )
+
+    task.wait(0.18)
+
+    FloatingButton.Visible = false
+
+    Main.Visible = true
+    MainScale.Scale = 0.05
+
+    Animate(
+        MainScale,
+        {Scale = 1},
+        0.5,
+        Enum.EasingStyle.Back,
+        Enum.EasingDirection.Out
+    )
+
+    task.wait(0.5)
+
+    AnimationBusy = false
+end
+
+-- ==========================================
+-- BUTTON CLICK
+-- ==========================================
+
+MinimizeButton.MouseButton1Click:Connect(function()
+    MinimizeMenu()
+end)
+
+FloatingButton.MouseButton1Click:Connect(function()
+    -- Если пользователь только что перетащил кнопку,
+    -- не открываем меню случайным кликом.
+    if FloatingMoved then
+        FloatingMoved = false
+        return
+    end
+
+    RestoreMenu()
+end)
+
+-- ==========================================
+-- FLOATING BUTTON HOVER
+-- ==========================================
+
+FloatingButton.MouseEnter:Connect(function()
+    if not MenuMinimized then
+        return
+    end
+
+    Animate(
+        FloatingButton,
+        {Size = UDim2.fromOffset(59,59)},
+        0.18,
+        Enum.EasingStyle.Quint
+    )
+
+    Animate(
+        FloatingStroke,
+        {Thickness = 3},
+        0.18
+    )
+end)
+
+FloatingButton.MouseLeave:Connect(function()
+    if not MenuMinimized then
+        return
+    end
+
+    Animate(
+        FloatingButton,
+        {Size = UDim2.fromOffset(54,54)},
+        0.18,
+        Enum.EasingStyle.Quint
+    )
+
+    Animate(
+        FloatingStroke,
+        {Thickness = 2},
+        0.18
+    )
+end)
+
+-- ==========================================
+-- MINIMIZE BUTTON HOVER
+-- ==========================================
+
+MinimizeButton.MouseEnter:Connect(function()
+    Animate(
+        MinimizeButton,
+        {
+            TextColor3 = Color3.fromRGB(255,255,255),
+            Size = UDim2.fromOffset(34,30)
+        },
+        0.16,
+        Enum.EasingStyle.Quint
+    )
+end)
+
+MinimizeButton.MouseLeave:Connect(function()
+    Animate(
+        MinimizeButton,
+        {
+            TextColor3 = Color3.fromRGB(220,220,220),
+            Size = UDim2.fromOffset(30,26)
+        },
+        0.16,
+        Enum.EasingStyle.Quint
+    )
+end)
+
+-- ==========================================
+-- GENERIC BUTTON ANIMATIONS
+-- ==========================================
+
+local function AddButtonAnimation(button)
+    if not button:IsA("TextButton") and not button:IsA("ImageButton") then
+        return
+    end
+
+    if button:GetAttribute("NeutralizationAnimated") then
+        return
+    end
+
+    button:SetAttribute("NeutralizationAnimated", true)
+
+    local originalSize = button.Size
+
+    button.MouseEnter:Connect(function()
+        Animate(
+            button,
+            {
+                Size = UDim2.new(
+                    originalSize.X.Scale,
+                    originalSize.X.Offset + 2,
+                    originalSize.Y.Scale,
+                    originalSize.Y.Offset + 2
+                )
+            },
+            0.14,
+            Enum.EasingStyle.Quint
+        )
+    end)
+
+    button.MouseLeave:Connect(function()
+        Animate(
+            button,
+            {Size = originalSize},
+            0.14,
+            Enum.EasingStyle.Quint
+        )
+    end)
+
+    button.MouseButton1Down:Connect(function()
+        Animate(
+            button,
+            {
+                Size = UDim2.new(
+                    originalSize.X.Scale,
+                    math.max(0, originalSize.X.Offset - 2),
+                    originalSize.Y.Scale,
+                    math.max(0, originalSize.Y.Offset - 2)
+                )
+            },
+            0.08,
+            Enum.EasingStyle.Quint
+        )
+    end)
+
+    button.MouseButton1Up:Connect(function()
+        Animate(
+            button,
+            {Size = originalSize},
+            0.12,
+            Enum.EasingStyle.Back
+        )
+    end)
+end
+
+for _, object in ipairs(Main:GetDescendants()) do
+    AddButtonAnimation(object)
+end
+
+Main.DescendantAdded:Connect(function(object)
+    task.defer(function()
+        AddButtonAnimation(object)
+    end)
+end)
+
+-- ==========================================
+-- LOGO ANIMATION
+-- ==========================================
+
+local LogoObject =
+    Main:FindFirstChild("Logo", true)
+    or Main:FindFirstChild("NeutralizationLogo", true)
+
+if LogoObject and LogoObject:IsA("GuiObject") then
+    LogoObject.MouseEnter:Connect(function()
+        Animate(
+            LogoObject,
+            {Rotation = 8},
+            0.2,
+            Enum.EasingStyle.Back
+        )
+    end)
+
+    LogoObject.MouseLeave:Connect(function()
+        Animate(
+            LogoObject,
+            {Rotation = 0},
+            0.2,
+            Enum.EasingStyle.Back
+        )
+    end)
+end
+
+-- ==========================================
+-- FOV ALWAYS CENTERED
+-- ==========================================
+
+RunService.RenderStepped:Connect(function()
+    if FOVCircle then
+        local viewport = Camera.ViewportSize
+
+        FOVCircle.Position = Vector2.new(
+            viewport.X / 2,
+            viewport.Y / 2
+        )
+
+        FOVCircle.Visible = Config.AimFOV == true
+    end
+end)
+
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+    Camera = workspace.CurrentCamera
+
+    task.defer(function()
+        if FOVCircle and Camera then
+            local viewport = Camera.ViewportSize
+
+            FOVCircle.Position = Vector2.new(
+                viewport.X / 2,
+                viewport.Y / 2
+            )
+        end
+    end)
+end)
+
+-- ==========================================
+-- FINAL REFRESH
+-- ==========================================
+
+pcall(function()
+    UpdateFOVCircle()
+end)
+
+pcall(function()
+    UpdateESP()
+end)
+
+print("NEUTRALIZATION HUB FINAL PATCH PART 2/2 LOADED")
