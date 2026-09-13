@@ -5109,3 +5109,670 @@ print(
 --==================================================
 -- END OF LUNAR HUB v3.0
 --==================================================
+
+--==================================================
+-- NEUTRALIZATION HUB UPDATE
+-- PART 1/8 - TITLE / LOGO
+--==================================================
+
+pcall(function()
+    -- Цвет НЕ меняем.
+    Logo.Text = "N"
+    Title.Text = "NEUTRALIZATION HUB"
+
+    Status.Text = "Neutralization Hub\nUser"
+
+    Version.Text = "v3.0"
+end)
+
+print("[Neutralization Hub] Part 1/8 applied.")
+
+--==================================================
+-- NEUTRALIZATION HUB UPDATE
+-- PART 2/8 - CENTERED AIM FOV
+--==================================================
+
+pcall(function()
+
+    GetMousePosition = function()
+        local camera = workspace.CurrentCamera
+
+        if not camera then
+            return Vector2.new(0, 0)
+        end
+
+        local viewport = camera.ViewportSize
+
+        return Vector2.new(
+            viewport.X / 2,
+            viewport.Y / 2
+        )
+    end
+
+    UpdateFOVCircle = function()
+
+        if not FOVCircle then
+            return
+        end
+
+        local camera = workspace.CurrentCamera
+
+        if not camera then
+            return
+        end
+
+        local viewport = camera.ViewportSize
+
+        local center = Vector2.new(
+            viewport.X / 2,
+            viewport.Y / 2
+        )
+
+        local radius = math.clamp(
+            Config.AimFOVSize,
+            25,
+            1000
+        )
+
+        FOVCircle.Size = UDim2.fromOffset(
+            radius * 2,
+            radius * 2
+        )
+
+        FOVCircle.AnchorPoint =
+            Vector2.new(0.5, 0.5)
+
+        FOVCircle.Position =
+            UDim2.fromOffset(
+                center.X,
+                center.Y
+            )
+
+        FOVCircle.Visible =
+            Config.AimFOV == true
+    end
+
+end)
+
+print("[Neutralization Hub] Part 2/8 applied.")
+
+--==================================================
+-- NEUTRALIZATION HUB UPDATE
+-- PART 4-8/8
+--==================================================
+
+pcall(function()
+
+    --==================================================
+    -- PART 4 - AIM FOV -> COMBAT
+    --==================================================
+
+    -- Удаляем старые контролы Aim FOV из Visuals.
+    if VisualPage then
+        for _, child in ipairs(VisualPage:GetChildren()) do
+            if child:IsA("GuiObject") then
+
+                local remove = false
+
+                for _, obj in ipairs(child:GetDescendants()) do
+                    if obj:IsA("TextLabel")
+                        or obj:IsA("TextButton")
+                        or obj:IsA("TextBox")
+                    then
+                        local text = tostring(obj.Text)
+
+                        if text == "Aim FOV"
+                            or text == "FOV Size"
+                        then
+                            remove = true
+                            break
+                        end
+                    end
+                end
+
+                if remove then
+                    child:Destroy()
+                end
+            end
+        end
+    end
+
+    -- Добавляем Aim FOV в Combat.
+    if CombatPage and CreateSection then
+        pcall(function()
+            CreateSection(
+                CombatPage,
+                "Aim FOV",
+                "Configure the Aim Assist field of view"
+            )
+        end)
+    end
+
+    if CombatPage and CreateToggle then
+        pcall(function()
+            CreateToggle(
+                CombatPage,
+                "Aim FOV",
+                Config.AimFOV,
+                function(value)
+                    Config.AimFOV = value
+                end
+            )
+        end)
+    end
+
+    if CombatPage and CreateValue then
+        pcall(function()
+            CreateValue(
+                CombatPage,
+                "FOV Size",
+                Config.AimFOVSize,
+                function(value)
+                    Config.AimFOVSize = math.clamp(
+                        math.floor(value),
+                        25,
+                        1000
+                    )
+                end
+            )
+        end)
+    end
+
+
+    --==================================================
+    -- PART 5 - ESP TEAM FILTER
+    --==================================================
+
+    -- Team Check больше не является отдельной
+    -- настройкой. Союзники всегда исключаются из ESP.
+    Config.TeamCheck = true
+
+    if IsTeammate then
+
+        local OldIsTeammate = IsTeammate
+
+        IsTeammate = function(player)
+
+            if not player then
+                return false
+            end
+
+            if player == LocalPlayer then
+                return false
+            end
+
+            if LocalPlayer
+                and LocalPlayer.Team
+                and player.Team
+            then
+                return player.Team == LocalPlayer.Team
+            end
+
+            return OldIsTeammate(player)
+        end
+
+    end
+
+
+    --==================================================
+    -- PART 6 - REMOVE TEAM CHECK / FOV CHANGER
+    --==================================================
+
+    -- Убираем Team Check из Visuals.
+    if VisualPage then
+
+        for _, child in ipairs(
+            VisualPage:GetChildren()
+        ) do
+
+            if child:IsA("GuiObject") then
+
+                local remove = false
+
+                for _, obj in ipairs(
+                    child:GetDescendants()
+                ) do
+
+                    if obj:IsA("TextLabel")
+                        or obj:IsA("TextButton")
+                        or obj:IsA("TextBox")
+                    then
+
+                        if tostring(obj.Text)
+                            == "Team Check"
+                        then
+                            remove = true
+                            break
+                        end
+
+                    end
+                end
+
+                if remove then
+                    child:Destroy()
+                end
+
+            end
+        end
+    end
+
+
+    -- Полностью отключаем FOV Changer.
+    Config.FOVChanger = false
+
+    -- Возвращаем стандартный FOV камеры.
+    pcall(function()
+
+        local camera = workspace.CurrentCamera
+
+        if camera then
+            camera.FieldOfView = 70
+        end
+
+    end)
+
+
+    -- Убираем контролы FOV Changer / Game FOV
+    -- из Movement.
+    if MovementPage then
+
+        for _, child in ipairs(
+            MovementPage:GetChildren()
+        ) do
+
+            if child:IsA("GuiObject") then
+
+                local remove = false
+
+                for _, obj in ipairs(
+                    child:GetDescendants()
+                ) do
+
+                    if obj:IsA("TextLabel")
+                        or obj:IsA("TextButton")
+                        or obj:IsA("TextBox")
+                    then
+
+                        local text = tostring(obj.Text)
+
+                        if text == "FOV Changer"
+                            or text == "Game FOV"
+                        then
+                            remove = true
+                            break
+                        end
+
+                    end
+                end
+
+                if remove then
+                    child:Destroy()
+                end
+
+            end
+        end
+    end
+
+
+    --==================================================
+    -- PART 7 - REMOVE MISC / ROUND CORNERS
+    --==================================================
+
+    -- Удаляем Misc страницу.
+    if MiscPage then
+        pcall(function()
+            MiscPage:Destroy()
+        end)
+    end
+
+    -- Удаляем кнопку Misc.
+    if CategoryButtons and MiscPage then
+        pcall(function()
+
+            local button =
+                CategoryButtons[MiscPage]
+
+            if button then
+                button:Destroy()
+            end
+
+            CategoryButtons[MiscPage] = nil
+
+        end)
+    end
+
+
+    -- Скругляем существующие UI элементы.
+    if Gui then
+
+        for _, object in ipairs(
+            Gui:GetDescendants()
+        ) do
+
+            if object:IsA("Frame")
+                or object:IsA("TextButton")
+                or object:IsA("TextLabel")
+                or object:IsA("TextBox")
+                or object:IsA("ScrollingFrame")
+            then
+
+                if not object:FindFirstChildOfClass(
+                    "UICorner"
+                ) then
+
+                    local corner =
+                        Instance.new("UICorner")
+
+                    corner.CornerRadius =
+                        UDim.new(0, 8)
+
+                    corner.Parent = object
+
+                end
+            end
+        end
+    end
+
+
+    --==================================================
+    -- PART 8 - MINIMIZE / RESTORE
+    --==================================================
+
+    if Main and TopBar and Gui then
+
+        local MinimizeButton =
+            Instance.new("TextButton")
+
+        MinimizeButton.Name =
+            "NeutralizationMinimize"
+
+        MinimizeButton.Size =
+            UDim2.fromOffset(30, 30)
+
+        MinimizeButton.Position =
+            UDim2.new(1, -73, 0, 9)
+
+        MinimizeButton.BackgroundColor3 =
+            Colors.Menu
+
+        MinimizeButton.BorderSizePixel = 0
+
+        MinimizeButton.Text = "−"
+
+        MinimizeButton.TextColor3 =
+            Colors.Text
+
+        MinimizeButton.TextSize = 18
+
+        MinimizeButton.Font =
+            Enum.Font.GothamBold
+
+        MinimizeButton.AutoButtonColor = false
+
+        MinimizeButton.Parent = TopBar
+
+
+        local MiniCorner =
+            Instance.new("UICorner")
+
+        MiniCorner.CornerRadius =
+            UDim.new(1, 0)
+
+        MiniCorner.Parent =
+            MinimizeButton
+
+
+        local FloatingButton =
+            Instance.new("TextButton")
+
+        FloatingButton.Name =
+            "NeutralizationFloatingButton"
+
+        FloatingButton.Size =
+            UDim2.fromOffset(52, 52)
+
+        FloatingButton.Position =
+            Main.Position
+
+        FloatingButton.AnchorPoint =
+            Vector2.new(0.5, 0.5)
+
+        FloatingButton.BackgroundColor3 =
+            Colors.Menu
+
+        FloatingButton.BorderSizePixel = 0
+
+        FloatingButton.Text = "N"
+
+        FloatingButton.TextColor3 =
+            Colors.Text
+
+        FloatingButton.TextSize = 22
+
+        FloatingButton.Font =
+            Enum.Font.GothamBold
+
+        FloatingButton.Visible = false
+
+        FloatingButton.AutoButtonColor = false
+
+        FloatingButton.Parent = Gui
+
+
+        local FloatingCorner =
+            Instance.new("UICorner")
+
+        FloatingCorner.CornerRadius =
+            UDim.new(1, 0)
+
+        FloatingCorner.Parent =
+            FloatingButton
+
+
+        local FloatingStroke =
+            Instance.new("UIStroke")
+
+        FloatingStroke.Color =
+            Colors.Border
+
+        FloatingStroke.Thickness = 1
+
+        FloatingStroke.Transparency = 0.15
+
+        FloatingStroke.Parent =
+            FloatingButton
+
+
+        local MenuOpen = true
+
+
+        -- Сворачивание.
+        MinimizeButton.MouseButton1Click:Connect(
+            function()
+
+                if not MenuOpen then
+                    return
+                end
+
+                MenuOpen = false
+
+                FloatingButton.Position =
+                    UDim2.new(
+                        Main.Position.X.Scale,
+                        Main.Position.X.Offset + 260,
+                        Main.Position.Y.Scale,
+                        Main.Position.Y.Offset + 160
+                    )
+
+                local tween
+
+                if Tween then
+                    tween = Tween(
+                        Main,
+                        {
+                            Size =
+                                UDim2.fromOffset(0, 0)
+                        },
+                        0.28
+                    )
+
+                    tween:Play()
+                else
+                    Main.Size =
+                        UDim2.fromOffset(0, 0)
+                end
+
+                task.delay(
+                    0.28,
+                    function()
+
+                        Main.Visible = false
+                        FloatingButton.Visible = true
+
+                    end
+                )
+
+            end
+        )
+
+
+        -- Раскрытие.
+        FloatingButton.MouseButton1Click:Connect(
+            function()
+
+                if MenuOpen then
+                    return
+                end
+
+                MenuOpen = true
+
+                FloatingButton.Visible = false
+                Main.Visible = true
+
+                Main.Size =
+                    UDim2.fromOffset(0, 0)
+
+                if Tween then
+
+                    local tween = Tween(
+                        Main,
+                        {
+                            Size =
+                                UDim2.fromOffset(
+                                    520,
+                                    320
+                                )
+                        },
+                        0.35
+                    )
+
+                    tween:Play()
+
+                else
+
+                    Main.Size =
+                        UDim2.fromOffset(
+                            520,
+                            320
+                        )
+
+                end
+
+            end
+        )
+
+
+        -- Hover мини-кнопки.
+        FloatingButton.MouseEnter:Connect(
+            function()
+
+                if Tween then
+
+                    Tween(
+                        FloatingButton,
+                        {
+                            Size =
+                                UDim2.fromOffset(
+                                    56,
+                                    56
+                                )
+                        },
+                        0.15
+                    ):Play()
+
+                else
+
+                    FloatingButton.Size =
+                        UDim2.fromOffset(
+                            56,
+                            56
+                        )
+
+                end
+
+            end
+        )
+
+
+        FloatingButton.MouseLeave:Connect(
+            function()
+
+                if Tween then
+
+                    Tween(
+                        FloatingButton,
+                        {
+                            Size =
+                                UDim2.fromOffset(
+                                    52,
+                                    52
+                                )
+                        },
+                        0.15
+                    ):Play()
+
+                else
+
+                    FloatingButton.Size =
+                        UDim2.fromOffset(
+                            52,
+                            52
+                        )
+
+                end
+
+            end
+        )
+
+    end
+
+
+    --==================================================
+    -- FINAL
+    --==================================================
+
+    print(
+        "[Neutralization Hub] Update 4-8 applied."
+    )
+
+    print(
+        "[Neutralization Hub] Menu size preserved: 520x320"
+    )
+
+    print(
+        "[Neutralization Hub] Aim FOV: CENTER"
+    )
+
+    print(
+        "[Neutralization Hub] ESP: TEAMMATES FILTERED"
+    )
+
+    print(
+        "[Neutralization Hub] FOV Changer: REMOVED"
+    )
+
+    print(
+        "[Neutralization Hub] Misc: REMOVED"
+    )
+
+end)
