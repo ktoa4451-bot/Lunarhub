@@ -5776,3 +5776,946 @@ pcall(function()
     )
 
 end)
+
+-- =========================================================
+-- NEUTRALIZATION HUB - FINAL UPDATE
+-- INSERT THIS ENTIRE BLOCK AT THE VERY END OF THE FILE
+-- =========================================================
+
+local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+
+local LocalPlayer = Players.LocalPlayer
+
+-- =========================================================
+-- 1. TITLE / LOGO
+-- =========================================================
+
+pcall(function()
+    if Logo then
+        Logo.Text = "N"
+    end
+
+    if Title then
+        Title.Text = "NEUTRALIZATION HUB"
+    end
+
+    if Status then
+        Status.Text = "Neutralization Hub\nUser"
+    end
+
+    if Version then
+        Version.Text = "v3.0"
+    end
+end)
+
+
+-- =========================================================
+-- 2. KEEP MENU SIZE 520x320
+-- =========================================================
+
+pcall(function()
+    Main.Size = UDim2.fromOffset(520, 320)
+end)
+
+
+-- =========================================================
+-- 3. FORCE AIM FOV TO SCREEN CENTER
+-- =========================================================
+
+local function Neutralization_GetScreenCenter()
+    local Camera = workspace.CurrentCamera
+
+    if not Camera then
+        return Vector2.new(0, 0)
+    end
+
+    local Viewport = Camera.ViewportSize
+
+    return Vector2.new(
+        Viewport.X / 2,
+        Viewport.Y / 2
+    )
+end
+
+pcall(function()
+    GetMousePosition = function()
+        return Neutralization_GetScreenCenter()
+    end
+end)
+
+pcall(function()
+    UpdateFOVCircle = function()
+        if not FOVCircle then
+            return
+        end
+
+        if not FOVCircle.Parent then
+            return
+        end
+
+        local Center = Neutralization_GetScreenCenter()
+
+        FOVCircle.Position = UDim2.fromOffset(
+            Center.X,
+            Center.Y
+        )
+    end
+end)
+
+
+-- =========================================================
+-- 4. FORCE ALLIES TO BE FRIENDLY
+-- =========================================================
+
+local function Neutralization_IsFriendly(player)
+    if not player then
+        return true
+    end
+
+    if player == LocalPlayer then
+        return true
+    end
+
+    -- Normal Roblox Team system
+    if LocalPlayer.Team ~= nil and player.Team ~= nil then
+        if LocalPlayer.Team == player.Team then
+            return true
+        end
+    end
+
+    return false
+end
+
+
+-- Replace the old teammate check completely
+pcall(function()
+    IsTeammate = function(player)
+        return Neutralization_IsFriendly(player)
+    end
+end)
+
+
+-- =========================================================
+-- 5. AIM ASSIST - NEVER TARGET ALLIES
+-- =========================================================
+
+pcall(function()
+
+    if GetBestTarget then
+
+        local Neutralization_OriginalGetBestTarget = GetBestTarget
+
+        GetBestTarget = function(...)
+
+            local Target = Neutralization_OriginalGetBestTarget(...)
+
+            if Target and Neutralization_IsFriendly(Target) then
+                return nil
+            end
+
+            return Target
+        end
+
+    end
+
+end)
+
+
+-- =========================================================
+-- 6. EXTRA AIM SAFETY
+-- =========================================================
+
+pcall(function()
+
+    if Players then
+
+        for _, Player in ipairs(Players:GetPlayers()) do
+
+            if Player ~= LocalPlayer then
+
+                Player.CharacterAdded:Connect(function()
+                    task.wait(0.2)
+
+                    -- Nothing required here.
+                    -- This keeps the target filtering active
+                    -- after character respawns.
+                end)
+
+            end
+
+        end
+
+    end
+
+end)
+
+
+-- =========================================================
+-- 7. REMOVE TEAM CHECK FROM VISUALS
+-- =========================================================
+
+pcall(function()
+
+    if VisualsPage then
+
+        for _, Object in ipairs(VisualsPage:GetDescendants()) do
+
+            if Object:IsA("TextLabel")
+                or Object:IsA("TextButton")
+                or Object:IsA("TextBox") then
+
+                local Text = tostring(Object.Text or "")
+
+                if Text == "Team Check"
+                    or Text == "Team check"
+                    or Text == "TEAM CHECK" then
+
+                    local Parent = Object.Parent
+
+                    if Parent then
+                        Parent:Destroy()
+                    else
+                        Object:Destroy()
+                    end
+
+                end
+
+            end
+
+        end
+
+    end
+
+end)
+
+
+-- =========================================================
+-- 8. FORCE ESP TO IGNORE ALLIES
+-- =========================================================
+
+pcall(function()
+
+    if UpdateESP then
+
+        local Neutralization_OriginalUpdateESP = UpdateESP
+
+        UpdateESP = function(...)
+
+            local Result = Neutralization_OriginalUpdateESP(...)
+
+            -- Existing ESP system already uses IsTeammate.
+            -- Our replacement above makes the teammate check
+            -- independent from the Visuals Team Check toggle.
+
+            return Result
+        end
+
+    end
+
+end)
+
+
+-- =========================================================
+-- 9. REMOVE FOV CHANGER FROM MOVEMENT
+-- =========================================================
+
+pcall(function()
+
+    if Config then
+        Config.FOVChanger = false
+    end
+
+    local Camera = workspace.CurrentCamera
+
+    if Camera then
+        Camera.FieldOfView = 70
+    end
+
+end)
+
+
+pcall(function()
+
+    if MovementPage then
+
+        for _, Object in ipairs(MovementPage:GetDescendants()) do
+
+            if Object:IsA("TextLabel")
+                or Object:IsA("TextButton")
+                or Object:IsA("TextBox") then
+
+                local Text = tostring(Object.Text or "")
+
+                if Text == "FOV Changer"
+                    or Text == "FOV changer"
+                    or Text == "Game FOV"
+                    or Text == "Game fov" then
+
+                    local Parent = Object.Parent
+
+                    if Parent then
+                        Parent:Destroy()
+                    else
+                        Object:Destroy()
+                    end
+
+                end
+
+            end
+
+        end
+
+    end
+
+end)
+
+
+-- =========================================================
+-- 10. REMOVE MISC CATEGORY
+-- =========================================================
+
+pcall(function()
+
+    if MiscPage then
+        MiscPage:Destroy()
+    end
+
+end)
+
+pcall(function()
+
+    if CategoryButtons and CategoryButtons.Misc then
+
+        local Button = CategoryButtons.Misc
+
+        if Button then
+            Button:Destroy()
+        end
+
+        CategoryButtons.Misc = nil
+    end
+
+end)
+
+
+-- =========================================================
+-- 11. ROUNDED CORNERS EVERYWHERE
+-- =========================================================
+
+pcall(function()
+
+    local function AddRound(Object)
+
+        if Object:IsA("Frame")
+            or Object:IsA("TextButton")
+            or Object:IsA("TextLabel")
+            or Object:IsA("TextBox")
+            or Object:IsA("ScrollingFrame") then
+
+            local Corner = Object:FindFirstChildOfClass("UICorner")
+
+            if not Corner then
+
+                Corner = Instance.new("UICorner")
+                Corner.CornerRadius = UDim.new(0, 8)
+                Corner.Parent = Object
+
+            end
+
+        end
+
+    end
+
+    for _, Object in ipairs(Gui:GetDescendants()) do
+        AddRound(Object)
+    end
+
+end)
+
+
+-- =========================================================
+-- 12. FIND / CREATE MINIMIZE BUTTON
+-- =========================================================
+
+local Neutralization_Minimize = nil
+local Neutralization_Floating = nil
+
+pcall(function()
+
+    Neutralization_Minimize = TopBar:FindFirstChild("NeutralizationMinimize")
+
+    if not Neutralization_Minimize then
+
+        Neutralization_Minimize = Instance.new("TextButton")
+        Neutralization_Minimize.Name = "NeutralizationMinimize"
+        Neutralization_Minimize.Parent = TopBar
+
+        Neutralization_Minimize.BackgroundTransparency = 1
+        Neutralization_Minimize.Size = UDim2.fromOffset(30, 30)
+        Neutralization_Minimize.Position = UDim2.new(1, -68, 0, 5)
+
+        Neutralization_Minimize.Text = "−"
+        Neutralization_Minimize.TextSize = 22
+        Neutralization_Minimize.Font = Enum.Font.GothamBold
+        Neutralization_Minimize.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+        Neutralization_Minimize.AutoButtonColor = false
+
+        local Corner = Instance.new("UICorner")
+        Corner.CornerRadius = UDim.new(1, 0)
+        Corner.Parent = Neutralization_Minimize
+
+    end
+
+end)
+
+
+-- =========================================================
+-- 13. CREATE MOVABLE FLOATING BUTTON
+-- =========================================================
+
+pcall(function()
+
+    Neutralization_Floating = Gui:FindFirstChild(
+        "NeutralizationFloatingButton"
+    )
+
+    if not Neutralization_Floating then
+
+        Neutralization_Floating = Instance.new("TextButton")
+        Neutralization_Floating.Name = "NeutralizationFloatingButton"
+        Neutralization_Floating.Parent = Gui
+
+        Neutralization_Floating.Size = UDim2.fromOffset(54, 54)
+
+        -- Bottom-left instead of center
+        Neutralization_Floating.AnchorPoint = Vector2.new(0.5, 0.5)
+        Neutralization_Floating.Position = UDim2.new(
+            0,
+            65,
+            1,
+            -65
+        )
+
+        Neutralization_Floating.Text = "N"
+
+        Neutralization_Floating.Font = Enum.Font.GothamBold
+        Neutralization_Floating.TextSize = 24
+        Neutralization_Floating.TextColor3 = Color3.fromRGB(
+            255,
+            255,
+            255
+        )
+
+        Neutralization_Floating.BackgroundColor3 =
+            Color3.fromRGB(190, 25, 25)
+
+        Neutralization_Floating.AutoButtonColor = false
+        Neutralization_Floating.Visible = false
+        Neutralization_Floating.ZIndex = 999
+
+        local Corner = Instance.new("UICorner")
+        Corner.CornerRadius = UDim.new(1, 0)
+        Corner.Parent = Neutralization_Floating
+
+        local Stroke = Instance.new("UIStroke")
+        Stroke.Thickness = 1.5
+        Stroke.Transparency = 0.25
+        Stroke.Parent = Neutralization_Floating
+
+    end
+
+end)
+
+
+-- =========================================================
+-- 14. DRAG FLOATING BUTTON
+-- =========================================================
+
+pcall(function()
+
+    if Neutralization_Floating then
+
+        local Dragging = false
+        local DragStart = nil
+        local StartPosition = nil
+
+        Neutralization_Floating.InputBegan:Connect(function(Input)
+
+            if Input.UserInputType == Enum.UserInputType.MouseButton1
+                or Input.UserInputType == Enum.UserInputType.Touch then
+
+                Dragging = true
+                DragStart = Input.Position
+                StartPosition = Neutralization_Floating.Position
+
+            end
+
+        end)
+
+
+        Neutralization_Floating.InputEnded:Connect(function(Input)
+
+            if Input.UserInputType == Enum.UserInputType.MouseButton1
+                or Input.UserInputType == Enum.UserInputType.Touch then
+
+                Dragging = false
+
+            end
+
+        end)
+
+
+        UIS.InputChanged:Connect(function(Input)
+
+            if not Dragging then
+                return
+            end
+
+            if Input.UserInputType ~= Enum.UserInputType.MouseMovement
+                and Input.UserInputType ~= Enum.UserInputType.Touch then
+                return
+            end
+
+            if not DragStart or not StartPosition then
+                return
+            end
+
+            local Delta = Input.Position - DragStart
+
+            Neutralization_Floating.Position = UDim2.new(
+                StartPosition.X.Scale,
+                StartPosition.X.Offset + Delta.X,
+
+                StartPosition.Y.Scale,
+                StartPosition.Y.Offset + Delta.Y
+            )
+
+        end)
+
+    end
+
+end)
+
+
+-- =========================================================
+-- 15. ANIMATION SETUP
+-- =========================================================
+
+local Neutralization_MainScale = nil
+
+pcall(function()
+
+    Neutralization_MainScale =
+        Main:FindFirstChild("NeutralizationUIScale")
+
+    if not Neutralization_MainScale then
+
+        Neutralization_MainScale = Instance.new("UIScale")
+        Neutralization_MainScale.Name = "NeutralizationUIScale"
+        Neutralization_MainScale.Scale = 1
+        Neutralization_MainScale.Parent = Main
+
+    end
+
+end)
+
+
+local function Neutralization_Tween(
+    Object,
+    Properties,
+    Duration,
+    Style,
+    Direction
+)
+
+    if not Object then
+        return
+    end
+
+    local Info = TweenInfo.new(
+        Duration or 0.25,
+        Style or Enum.EasingStyle.Quart,
+        Direction or Enum.EasingDirection.Out
+    )
+
+    local Tween = TweenService:Create(
+        Object,
+        Info,
+        Properties
+    )
+
+    Tween:Play()
+
+    return Tween
+end
+
+
+-- =========================================================
+-- 16. MINIMIZE / RESTORE
+-- =========================================================
+
+pcall(function()
+
+    if Neutralization_Minimize
+        and Neutralization_Floating then
+
+        local IsMinimized = false
+
+        Neutralization_Minimize.MouseEnter:Connect(function()
+
+            Neutralization_Tween(
+                Neutralization_Minimize,
+                {
+                    TextSize = 26
+                },
+                0.15
+            )
+
+        end)
+
+
+        Neutralization_Minimize.MouseLeave:Connect(function()
+
+            Neutralization_Tween(
+                Neutralization_Minimize,
+                {
+                    TextSize = 22
+                },
+                0.15
+            )
+
+        end)
+
+
+        Neutralization_Minimize.MouseButton1Click:Connect(function()
+
+            if IsMinimized then
+                return
+            end
+
+            IsMinimized = true
+
+            -- Small press animation
+            if Neutralization_MainScale then
+
+                Neutralization_Tween(
+                    Neutralization_MainScale,
+                    {
+                        Scale = 0.92
+                    },
+                    0.12,
+                    Enum.EasingStyle.Quad
+                )
+
+                task.wait(0.12)
+
+                Neutralization_Tween(
+                    Neutralization_MainScale,
+                    {
+                        Scale = 0.05
+                    },
+                    0.30,
+                    Enum.EasingStyle.Back,
+                    Enum.EasingDirection.In
+                )
+
+            end
+
+            task.wait(0.25)
+
+            Main.Visible = false
+
+            Neutralization_Floating.Visible = true
+
+            Neutralization_Floating.Size =
+                UDim2.fromOffset(20, 20)
+
+            Neutralization_Floating.TextTransparency = 1
+
+            Neutralization_Tween(
+                Neutralization_Floating,
+                {
+                    Size = UDim2.fromOffset(54, 54),
+                    TextTransparency = 0
+                },
+                0.35,
+                Enum.EasingStyle.Back,
+                Enum.EasingDirection.Out
+            )
+
+        end)
+
+
+        Neutralization_Floating.MouseEnter:Connect(function()
+
+            Neutralization_Tween(
+                Neutralization_Floating,
+                {
+                    Size = UDim2.fromOffset(60, 60)
+                },
+                0.15,
+                Enum.EasingStyle.Quad
+            )
+
+        end)
+
+
+        Neutralization_Floating.MouseLeave:Connect(function()
+
+            Neutralization_Tween(
+                Neutralization_Floating,
+                {
+                    Size = UDim2.fromOffset(54, 54)
+                },
+                0.15,
+                Enum.EasingStyle.Quad
+            )
+
+        end)
+
+
+        Neutralization_Floating.MouseButton1Click:Connect(function()
+
+            IsMinimized = false
+
+            Neutralization_Tween(
+                Neutralization_Floating,
+                {
+                    Size = UDim2.fromOffset(20, 20),
+                    TextTransparency = 1
+                },
+                0.20,
+                Enum.EasingStyle.Quad,
+                Enum.EasingDirection.In
+            )
+
+            task.wait(0.18)
+
+            Neutralization_Floating.Visible = false
+
+            Main.Visible = true
+
+            if Neutralization_MainScale then
+
+                Neutralization_MainScale.Scale = 0.05
+
+                Neutralization_Tween(
+                    Neutralization_MainScale,
+                    {
+                        Scale = 1
+                    },
+                    0.40,
+                    Enum.EasingStyle.Back,
+                    Enum.EasingDirection.Out
+                )
+
+            end
+
+        end)
+
+    end
+
+end)
+
+
+-- =========================================================
+-- 17. LOGO ANIMATION
+-- =========================================================
+
+pcall(function()
+
+    if Logo then
+
+        Logo.MouseEnter:Connect(function()
+
+            Neutralization_Tween(
+                Logo,
+                {
+                    Rotation = -8
+                },
+                0.15,
+                Enum.EasingStyle.Quad
+            )
+
+        end)
+
+
+        Logo.MouseLeave:Connect(function()
+
+            Neutralization_Tween(
+                Logo,
+                {
+                    Rotation = 0
+                },
+                0.18,
+                Enum.EasingStyle.Back
+            )
+
+        end)
+
+    end
+
+end)
+
+
+-- =========================================================
+-- 18. OPEN ANIMATION
+-- =========================================================
+
+pcall(function()
+
+    if Neutralization_MainScale then
+
+        Neutralization_MainScale.Scale = 0.92
+
+        task.delay(0.05, function()
+
+            Neutralization_Tween(
+                Neutralization_MainScale,
+                {
+                    Scale = 1
+                },
+                0.45,
+                Enum.EasingStyle.Back,
+                Enum.EasingDirection.Out
+            )
+
+        end)
+
+    end
+
+end)
+
+
+-- =========================================================
+-- 19. CATEGORY BUTTON ANIMATIONS
+-- =========================================================
+
+pcall(function()
+
+    if CategoryButtons then
+
+        for _, Button in pairs(CategoryButtons) do
+
+            if typeof(Button) == "Instance"
+                and Button:IsA("TextButton") then
+
+                Button.AutoButtonColor = false
+
+                Button.MouseEnter:Connect(function()
+
+                    Neutralization_Tween(
+                        Button,
+                        {
+                            BackgroundTransparency =
+                                math.max(
+                                    0,
+                                    Button.BackgroundTransparency - 0.12
+                                )
+                        },
+                        0.12
+                    )
+
+                end)
+
+
+                Button.MouseLeave:Connect(function()
+
+                    Neutralization_Tween(
+                        Button,
+                        {
+                            BackgroundTransparency =
+                                math.min(
+                                    1,
+                                    Button.BackgroundTransparency + 0.12
+                                )
+                        },
+                        0.12
+                    )
+
+                end)
+
+            end
+
+        end
+
+    end
+
+end)
+
+
+-- =========================================================
+-- UPDATE FOV CIRCLE IMMEDIATELY
+-- =========================================================
+
+pcall(function()
+
+    if FOVCircle then
+
+        -- Always keep the FOV circle centered
+        FOVCircle.AnchorPoint = Vector2.new(0.5, 0.5)
+
+        local Camera = workspace.CurrentCamera
+
+        if Camera then
+
+            local Viewport = Camera.ViewportSize
+
+            FOVCircle.Position = UDim2.fromOffset(
+                Viewport.X / 2,
+                Viewport.Y / 2
+            )
+
+        end
+
+    end
+
+end)
+
+
+-- =========================================================
+-- KEEP FOV CIRCLE CENTERED AFTER RESOLUTION CHANGES
+-- =========================================================
+
+pcall(function()
+
+    workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+
+        task.wait()
+
+        if UpdateFOVCircle then
+            UpdateFOVCircle()
+        end
+
+    end)
+
+end)
+
+
+pcall(function()
+
+    local Camera = workspace.CurrentCamera
+
+    if Camera then
+
+        Camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+
+            if UpdateFOVCircle then
+                UpdateFOVCircle()
+            end
+
+        end)
+
+    end
+
+end)
+
+
+-- =========================================================
+-- FINAL
+-- =========================================================
+
+print("Neutralization Hub final update loaded.")
